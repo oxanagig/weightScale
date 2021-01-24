@@ -1,0 +1,26 @@
+/*
+  button.h 
+  Library for button 
+  Created by Xiang Gao, November 29, 2020.
+*/
+
+#include "arduino.h"
+
+#ifndef BUTTON_h
+#define BUTTON_h
+
+#define BTN_FUNC    13
+#define BTN_ONOFF   12
+#define BTN_ZERO    11
+#define BTN_MODE    10 
+
+class button
+{
+    public:
+        button();
+        bool isPressed(int button);
+
+    private:
+};
+
+#endif
