@@ -57,12 +57,12 @@ void gVariables::begin(void)
 }
 
 
-uint8_t gVariables::getDisplayStatus(void)
+enum DISPLAY_STATUS gVariables::getDisplayStatus(void)
 {
   return _displayStatus;
 }
 
-void gVariables::setDisplayStatus(uint8_t displayStatus)
+void gVariables::setDisplayStatus(enum DISPLAY_STATUS displayStatus)
 {
   _displayStatus = displayStatus;
 }

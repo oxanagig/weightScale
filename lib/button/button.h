@@ -19,8 +19,12 @@ class button
     public:
         button();
         bool isPressed(int button);
+        bool hasPressed(int button);
+        void setPressed(int button);
+        void clearPressState(void);
 
     private:
+        bool _hasPressed[4];
 };
 
 #endif

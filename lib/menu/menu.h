@@ -21,10 +21,9 @@ class menu
 {
   public:
     menu(display* Display = NULL, button* Button=NULL, wiredSensor* sensor=NULL, gVariables* variable=NULL);
-    void functionMenu();
-    void modeMenu();
-    void secretMenu();
-    void process();
+    void processFunctionMenu();
+    void processModeMenu();
+    void processSecretMenu();
     void setMenuExit(bool enabled);
     
   private:
@@ -88,10 +87,6 @@ class menu
     const char* _optionTitle;
 
     uint8_t _processMenu;
-
-    void processFunctionMenu();
-    void processModeMenu();
-    void processSecretMenu();
     void optionSelect(void);
     bool menuButtonProcess(void);
     void exitMenu(void);

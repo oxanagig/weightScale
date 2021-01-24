@@ -104,8 +104,8 @@ class gVariables
         void begin(void);
         // the variables that stored in flash will be accessed 
         // through getter and setter function
-        uint8_t getDisplayStatus(void);
-        void setDisplayStatus(uint8_t displayStatus);
+        enum DISPLAY_STATUS getDisplayStatus(void);
+        void setDisplayStatus(enum DISPLAY_STATUS displayStatus);
         
         uint8_t getUnits(void);
         void setUnits(uint8_t units);
@@ -135,7 +135,7 @@ class gVariables
 
 
     private:
-        uint8_t _displayStatus;
+        enum DISPLAY_STATUS _displayStatus;
         bool _isAutoOff;
         uint8_t _lang;
         uint8_t _displayUses;

@@ -23,6 +23,16 @@
 #define DISPLAY_RESET_PIN 7
 #define MBAR_ONOFF        5 // this a 5V output pin
 
+enum SYS_STATE 
+{
+    NO_SENSOR,
+    DISPLAY_MEASUREMENT,
+    DISPLAY_MENU,
+    DISPLAY_STATUS,
+    DISPLAY_SECRET
+};
+
+enum SYS_STATE systemState = NO_SENSOR;
 gVariables variables;
 adc30 adc;
 button Button;
@@ -259,8 +269,9 @@ void buttonFuncInterruptHandler(void)
         if (interrupt_time - last_interrupt_time > 200)
         {
             while(Button.isPressed(BTN_FUNC));
-            DEBUG_MSG("function menu\n");
-            Menu.functionMenu();
+            DEBUG_MSG("func pressed\n");
+            Button.setPressed(BTN_FUNC);
+            //Menu.functionMenu();
         }
     }
 }
@@ -276,8 +287,9 @@ void buttonZeroInterruptHandler(void)
         if (interrupt_time - last_interrupt_time > 200)
         {
             while(Button.isPressed(BTN_ZERO));
-            DEBUG_MSG("zero\n");
-            sensor.setSystemZero();
+            DEBUG_MSG("zero pressed\n");
+            Button.setPressed(BTN_ZERO);
+            //sensor.setSystemZero();
         }
         last_interrupt_time = interrupt_time;
     }
@@ -295,8 +307,9 @@ void buttonModeInterruptHandler(void)
         if (interrupt_time - last_interrupt_time > 200)
         {
             while(Button.isPressed(BTN_MODE));
-            DEBUG_MSG("mode menu\n");
-            Menu.modeMenu();
+            DEBUG_MSG("mode presssed\n");
+            Button.setPressed(BTN_MODE);
+            //Menu.modeMenu();
         }
         last_interrupt_time = interrupt_time;
     }
@@ -334,47 +347,104 @@ void setup() {
 
   digitalWrite(DISPLAY_RESET_PIN,HIGH);
   digitalWrite(MBAR_ONOFF,HIGH);
-
-  displayOn();
-
 }
 
 void loop() 
 {
-  
     uint16_t adcReading;
 
-    //DEBUG_MSG("read sensor value: ");
-    adcReading = sensor.getReading(); 
-    //DEBUG_MSG(adcReading);
-    //DEBUG_MSG("\n");
-    Menu.process();
-
-    if(variables.systemZero)
+    switch(systemState)
     {
-        DEBUG_MSG("SystemZero\n");
-        variables.autoOffCount = 0;
-        sensor.zeroFast();
+        case NO_SENSOR:
+                // this a blocking code
+                // it will loop inside the function until find the sensor
+                // or it reaches the auto off time limit
+                displayOn();
+                systemState = DISPLAY_MEASUREMENT;
+                break;
+
+        case DISPLAY_MEASUREMENT:
+
+            DEBUG_MSG(Button.hasPressed(BTN_ZERO));
+            DEBUG_MSG("\n");
+
+            if(Button.hasPressed(BTN_ZERO)
+             &&Button.hasPressed(BTN_MODE))
+            {
+                systemState = DISPLAY_SECRET;
+            }
+            else if(Button.hasPressed(BTN_ZERO))
+            {
+                sensor.setSystemZero();
+                DEBUG_MSG("SystemZero\n");
+                variables.autoOffCount = 0;
+                sensor.zeroFast();
+            }
+            else if(Button.hasPressed(BTN_MODE))
+            {
+                systemState = DISPLAY_STATUS;
+            }
+            else if(Button.hasPressed(BTN_FUNC))
+            {
+                systemState = DISPLAY_MENU;
+            }
+                Button.clearPressState();
+
+            //DEBUG_MSG("read sensor value: ");
+            adcReading = sensor.getReading(); 
+            //DEBUG_MSG(adcReading);
+            //DEBUG_MSG("\n");
+
+            //if value is 0 or 65535, check the memory to make sure we're still connected
+            if(adcReading==0 || adcReading==65535)
+            {
+                if(!sensor.getConnection())
+                {
+                    // sensor not found
+                    findSensor();
+                }
+                
+            }
+            if(variables.getIsAutoOff())
+            {
+                autoOffCheck(adcReading);
+            }
+            
+            Display.clearBuffer();   
+            Display.setSensorValue(adcReading);
+            Display.setValueFormat(FAMILY_STANDARD_FORCE);
+            //DEBUG_MSG("display first line\n");
+            Display.displaySensorValue(0);
+            Display.setDisplayStatus(variables.getDisplayStatus());
+            //DEBUG_MSG("display second line\n");
+            Display.displaySensorValue(1);
+            Display.update();
+            break;
+
+        case DISPLAY_STATUS:
+            Menu.processModeMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
+        
+        case DISPLAY_MENU:
+            Menu.processFunctionMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
+
+        case DISPLAY_SECRET:
+            Menu.processSecretMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
+
+        default:
+            break;
     }
 
-    if(variables.getIsAutoOff())
-    {
-        autoOffCheck(adcReading);
-    }
-    
-
-    Display.clearBuffer();   
-    Display.setSensorValue(adcReading);
-    Display.setValueFormat(FAMILY_STANDARD_FORCE);
-    //DEBUG_MSG("display first line\n");
-    Display.displaySensorValue(0);
-    Display.setDisplayStatus(DISPLAY_FORCE_PEAK);
-    //DEBUG_MSG("display second line\n");
-    Display.displaySensorValue(1);
-    Display.update();
 
     //cycles++;
     delay(CYCLE_TIME_MS);
-
 }
 

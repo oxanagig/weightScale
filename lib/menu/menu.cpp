@@ -33,18 +33,21 @@ void menu::optionSelect(void)
         return;
     }
 
-    _display->msgFirstLine(_optionTitle);
-
-    switch(_optionSelected)
-    {
-        case 1: _display->msgSecondLine(_option1);break;
-        case 2: _display->msgSecondLine(_option2);break;
-        case 3: _display->msgSecondLine(_option3);break;
-        default: _display->msgSecondLine(_option0); _optionSelected = 0;break;
-    }
 
     while(1)
     {
+        _display->clearBuffer();
+        _display->msgFirstLine(_optionTitle);
+
+        switch(_optionSelected)
+        {
+            case 1: _display->msgSecondLine(_option1);break;
+            case 2: _display->msgSecondLine(_option2);break;
+            case 3: _display->msgSecondLine(_option3);break;
+            default: _display->msgSecondLine(_option0); _optionSelected = 0;break;
+        }
+        _display->update();
+
         // Allow turning the power off
         if (_button->isPressed(BTN_ONOFF))
         {
@@ -83,101 +86,129 @@ void menu::optionSelect(void)
     }
 }
 
-void menu::functionMenu(void)
-{
-    _processMenu = FUNCTION_MENU;
-}
 
 void menu::processFunctionMenu(void)
 {
 
+    // char peakForce[28];
+    // char units[28];
+    // char autoOff[28];
+
+    // _display->setFont(u8g2_font_helvR08_tf);
+    // _display->clearBuffer();
+    
+    // sprintf(peakForce,"Peak Force: On");
+    // _display->msg(peakForce,5,20);
+
+    // sprintf(units,"Units: kN(kNewton)");
+    // _display->msg(units,5,30);
+
+    // sprintf(autoOff,"Auto Off: Enabled");
+    // _display->msg(autoOff,5,40);
+    // _display->update();
+    // delay(1000);
+
     // TODO: turn off interrupt on change for the four buttons
     
-    // switch(_var->getLang())
-    // {
-    //     case LANG_ES:
-    //         _optionTitle = DS_TITLE_ES;
-    //         _option0 = DS_OP0_ES;
-    //         _option1 = DS_OP1_ES;
-    //         break;
-    //     case LANG_DE:
-    //         _optionTitle = DS_TITLE_DE;
-    //         _option0 = DS_OP0_DE;
-    //         _option1 = DS_OP1_DE;
-    //         break;
-    //     default:
-    //         _optionTitle = DS_TITLE;
-    //         _option0 = DS_OP0;
-    //         _option1 = DS_OP1;
-    //         break;     
-    // }
+    // Dispaly Status
+    switch(_var->getLang())
+    {
+        case LANG_ES:
+            _optionTitle = DS_TITLE_ES;
+            _option0 = DS_OP0_ES;
+            _option1 = DS_OP1_ES;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;
+        case LANG_DE:
+            _optionTitle = DS_TITLE_DE;
+            _option0 = DS_OP0_DE;
+            _option1 = DS_OP1_DE;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;
+        default:
+            _optionTitle = DS_TITLE;
+            _option0 = DS_OP0;
+            _option1 = DS_OP1;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;     
+    }
 
-    // _optionSelected = _var->getDisplayStatus();
-    // optionSelect();
+    _optionSelected = (uint8_t)_var->getDisplayStatus();
+    optionSelect();
 
-    // //write only if a change was made
-    // if(_optionSelected!=_var->getDisplayStatus())
-    // {
-    //     _var->setDisplayStatus(_optionSelected);
-    // }
+    //write only if a change was made
+    if(_optionSelected!=(uint8_t)_var->getDisplayStatus())
+    {
+        _var->setDisplayStatus((enum DISPLAY_STATUS)_optionSelected);
+    }
 
-    // switch(_var->getLang())
-    // {
-    //     case LANG_ES:
-    //         _optionTitle = U_TITLE_ES;
-    //         _option0 = U_OP0_ES;
-    //         _option2 = U_OP2_ES;
-    //         break;
-    //     case LANG_DE:
-    //         _optionTitle = U_TITLE_DE;
-    //         _option0 = U_OP0_DE;
-    //         _option2 = U_OP2_DE;
-    //         break;
-    //     default:
-    //         _optionTitle = U_TITLE;
-    //         _option0 = U_OP0;
-    //         _option2 = U_OP2;
-    //         break;     
-    // }
+    //Unit Select
+    switch(_var->getLang())
+    {
+        case LANG_ES:
+            _optionTitle = U_TITLE_ES;
+            _option0 = U_OP0_ES;
+            _option2 = U_OP2_ES;
+            break;
+        case LANG_DE:
+            _optionTitle = U_TITLE_DE;
+            _option0 = U_OP0_DE;
+            _option2 = U_OP2_DE;
+            break;
+        default:
+            _optionTitle = U_TITLE;
+            _option0 = U_OP0;
+            _option2 = U_OP2;
+            break;     
+    }
 
-    // if(_var->unitFamily!=FAMILY_LOW_FORCE)
-    // {
-    //     _option3 = KNEWTON;
-    // }
-    // _option1 = NEWTON;
-    // _optionSelected = _var->getUnits();
-    // optionSelect();
+    if(_var->unitFamily!=FAMILY_LOW_FORCE)
+    {
+        _option3 = KNEWTON;
+    }
+    _option1 = NEWTON;
+    _optionSelected = _var->getUnits();
+    optionSelect();
 
-    // //Immediately setup sensor
-    // if(_optionSelected !=_var->getUnits())
-    // {
-    //     _var->setUnits(_optionSelected);
-    //     //TODO: gosub sensor_init_units
-    // }
+    //Immediately setup sensor
+    if(_optionSelected !=_var->getUnits())
+    {
+        _var->setUnits(_optionSelected);
+        _sensor->initUnits();
+    }
 
-    // //autoOff select
-    // switch(_var->getLang())
-    // {
-    //     case LANG_ES:
-    //         _optionTitle = AO_TITLE_ES;
-    //         _option0 = AO_OP0_ES;
-    //         _option1 = AO_OP1_ES;
-    //         break;
-    //     case LANG_DE:
-    //         _optionTitle = AO_TITLE_DE;
-    //         _option0 = AO_OP0_DE;
-    //         _option1 = AO_OP1_DE;
-    //         break;
-    //     default:
-    //         _optionTitle = AO_TITLE;
-    //         _option0 = AO_OP0;
-    //         _option1 = AO_OP1;
-    //         break;  
-    // }
+    //autoOff select
+    switch(_var->getLang())
+    {
+        case LANG_ES:
+            _optionTitle = AO_TITLE_ES;
+            _option0 = AO_OP0_ES;
+            _option1 = AO_OP1_ES;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;
+        case LANG_DE:
+            _optionTitle = AO_TITLE_DE;
+            _option0 = AO_OP0_DE;
+            _option1 = AO_OP1_DE;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;
+        default:
+            _optionTitle = AO_TITLE;
+            _option0 = AO_OP0;
+            _option1 = AO_OP1;
+            _option2 = NULL;
+            _option3 = NULL;
+            break;  
+    }
 
-    // _optionSelected = _var->getIsAutoOff();
-    // optionSelect();
-    // _var->setIsAutoOff(_optionSelected);
+    _optionSelected = _var->getIsAutoOff();
+    optionSelect();
+    _var->setIsAutoOff(_optionSelected);
 
     // //language menu
     // switch(_var->getLang())
@@ -205,11 +236,6 @@ void menu::processFunctionMenu(void)
     _menuExit = false;
 }
 
-void menu::modeMenu(void)
-{
-    _processMenu = MODE_MENU;
-}
-
 void menu::processModeMenu(void)
 {
 
@@ -231,12 +257,12 @@ void menu::processModeMenu(void)
 
      // show calibrated data
     storedCalDate = _sensor->getCalDate();
-    sprintf(calDate,"Sensor Calibrated: %4d-%02d",((storedCalDate / 100) + 2000),storedCalDate);
+    sprintf(calDate,"Calibrated: %4d-%02d",((storedCalDate / 100) + 2000),storedCalDate%100);
     _display->msg(calDate,5,18);
 
     // show cliabration due date
     storedCalDue = _sensor->getCalDue();
-    sprintf(calDue,"Calibration Due: %4d-%02d",((storedCalDue / 100) + 2000),storedCalDue);
+    sprintf(calDue,"Calibration Due: %4d-%02d",((storedCalDue / 100) + 2000),storedCalDue%100);
     _display->msg(calDue,5,27);
 
     //show sensor firmware version
@@ -246,10 +272,8 @@ void menu::processModeMenu(void)
     // show display firmware version
     sprintf(version,"Display Firmware: %02d%02d",DISPLAY_VERSION_YEAR,DISPLAY_VERSION_MONTH);
     _display->msg(version,5,45);
-    Serial.println("display");
     _display->update();
     delay(500);
-    Serial.println("afterdisplay");
     // if(menuButtonProcess())
     // {
     //     exitMenu();
@@ -269,18 +293,15 @@ void menu::processModeMenu(void)
     Serial.println("exit display");
 }
 
-void menu::secretMenu(void)
-{
-    _processMenu = SECRET_MENU;
-}
 
 void menu::processSecretMenu(void)
 {
     
     char adcGain[9];
     //TODO: turn off interrupt for buttons except onff button
-
+    
     delay(300);
+    _display->clearBuffer();
     _optionTitle = SM_TITILE;
     _option0 = SM_OP0;
     _option1 = SM_OP1;
@@ -293,6 +314,12 @@ void menu::processSecretMenu(void)
     {
         _var->setUnits(UNIT_MV);
         _sensor->resetAdc();
+    }
+    else
+    {
+        _var->setUnits(UNIT_N);
+        _sensor->initFast();
+        _sensor->initUnits();
     }
 
     // show current ADC gain
@@ -340,25 +367,4 @@ void menu::exitMenu(void)
 void menu::setMenuExit(bool enabled)
 {
     _menuExit = enabled;
-}
-
-void menu::process()
-{
-    Serial.print("process:");
-    Serial.println(_processMenu);
-    switch(_processMenu)
-    {
-        case FUNCTION_MENU: 
-            processFunctionMenu();
-            break;
-        case MODE_MENU:
-            processModeMenu();
-            break;
-        case SECRET_MENU:
-            processSecretMenu();
-            break;
-        default:
-            break;
-    }
-    _processMenu = NO_ACTION;
 }

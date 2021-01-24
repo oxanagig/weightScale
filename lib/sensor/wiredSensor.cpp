@@ -26,20 +26,6 @@ uint16_t wiredSensor::getReading(void)
     uint16_t memValue;
     _adc->singleConvertMode();
     result = _adc->getValue();
-
-    //if value is 0 or 65535, check the memory to make sure we're still connected
-    if(result==0 || result==65535)
-    {
-        if(!getConnection())
-        {
-            // sensor not found
-        }
-        else
-        {
-            // sensor found
-        }
-        
-    }
     return result;
 }
 
