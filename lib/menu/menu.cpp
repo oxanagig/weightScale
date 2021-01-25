@@ -109,8 +109,11 @@ void menu::displayCurrentFunction(void)
         _option[2] = NULL;
         _option[3] = NULL;
 
-        sprintf(secret,"%s: %s",_optionTitle,_option[_optionSelected]);
-        _display->msg(secret,5,20);
+        _display->setHighligthedFont();
+        _display->msg(_optionTitle,5,20);
+        _display->setnormalFont();
+        sprintf(secret," %s",_option[_optionSelected]);
+        _display->msg(secret);
         _display->update();
         return;
     }
@@ -127,14 +130,17 @@ void menu::displayCurrentFunction(void)
     if(_currentOption == 0)
     {
         _display->setHighligthedFont();
-        sprintf(peakForce,"%s: %s",_optionTitle,_option[_optionSelected]);
+        _display->msg(_optionTitle,5,20);
+        _display->setnormalFont();
+        sprintf(peakForce,": %s",_option[_optionSelected]);
+        _display->msg(peakForce);
     }
     else
     {
         sprintf(peakForce,"%s: %s",_optionTitle,_option[(uint8_t)_var->getDisplayStatus()]);
+        _display->msg(peakForce,5,20);
     }
-    _display->msg(peakForce,5,20);
-    _display->setnormalFont();
+    
 
     //Unit Select
     _optionTitle = U_TITLE;
@@ -149,16 +155,18 @@ void menu::displayCurrentFunction(void)
 
     if(_currentOption == 1)
     {
-        
         _display->setHighligthedFont();
-        sprintf(units,"%s: %s",_optionTitle,_option[_optionSelected]);    
+        _display->msg(_optionTitle,5,35);
+        _display->setnormalFont();
+        sprintf(units,": %s",_option[_optionSelected]);   
+        _display->msg(units);
     }
     else
     {
         sprintf(units,"%s: %s",_optionTitle,_option[(uint8_t)_var->getUnits()]);
+        _display->msg(units,5,35);
     }
-    _display->msg(units,5,40);
-    _display->setnormalFont();
+    
 
     //autoOff select
     _optionTitle = AO_TITLE;
@@ -169,15 +177,17 @@ void menu::displayCurrentFunction(void)
 
     if(_currentOption == 2)
     {
-        _display->setHighligthedFont(); 
-        sprintf(autoOff,"%s: %s",_optionTitle,_option[_optionSelected]); 
+        _display->setHighligthedFont();
+        _display->msg(_optionTitle,5,50);
+        _display->setnormalFont();
+        sprintf(autoOff,": %s",_option[_optionSelected]); 
+        _display->msg(autoOff);
     }
     else
     {
         sprintf(autoOff,"%s: %s",_optionTitle,_option[(uint8_t)_var->getIsAutoOff()]); 
+        _display->msg(autoOff,5,50);
     }
-    _display->msg(autoOff,5,60);
-    _display->setnormalFont();
     _display->update();
 }
 
