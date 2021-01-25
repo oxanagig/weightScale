@@ -78,11 +78,19 @@ void display::msgSecondLine(const char* inputMessage)
 }
 
 /*
-* display text on several lines
+* display text with specific starting position
 */
 void display::msg(const char* inputMessage,uint16_t x, uint16_t y)
 {
     _u8g2->setCursor(x, y);
+    _u8g2->print(inputMessage);
+}
+
+/*
+* display text with the current cursor position
+*/
+void display::msg(const char* inputMessage)
+{
     _u8g2->print(inputMessage);
 }
 
@@ -482,4 +490,21 @@ uint8_t display::getDigit(uint16_t number, uint8_t position)
 void display::setSensorValue(uint16_t value)
 {
     _value = value;
+}
+
+void display::setHighligthedFont(void)
+{
+    _u8g2->setFontMode(0);
+    _u8g2->setDrawColor(0);
+}
+
+void display::setnormalFont(void)
+{
+    _u8g2->setFontMode(0);
+    _u8g2->setDrawColor(1);
+}
+
+void display::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
+{
+    _u8g2->drawBox(x,y,w,h);
 }

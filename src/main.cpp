@@ -356,17 +356,14 @@ void loop()
     switch(systemState)
     {
         case NO_SENSOR:
-                // this a blocking code
-                // it will loop inside the function until find the sensor
-                // or it reaches the auto off time limit
-                displayOn();
-                systemState = DISPLAY_MEASUREMENT;
-                break;
+            // this a blocking code
+            // it will loop inside the function until find the sensor
+            // or it reaches the auto off time limit
+            displayOn();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
 
         case DISPLAY_MEASUREMENT:
-
-            DEBUG_MSG(Button.hasPressed(BTN_ZERO));
-            DEBUG_MSG("\n");
 
             if(Button.hasPressed(BTN_ZERO)
              &&Button.hasPressed(BTN_MODE))

@@ -28,25 +28,14 @@ void menu::optionSelect(void)
 {
     if(_menuExit) 
     {
-        _option2 = NULL;
-        _option3 = NULL;
+        _option[2] = NULL;
+        _option[3] = NULL;
         return;
     }
 
-
     while(1)
     {
-        _display->clearBuffer();
-        _display->msgFirstLine(_optionTitle);
-
-        switch(_optionSelected)
-        {
-            case 1: _display->msgSecondLine(_option1);break;
-            case 2: _display->msgSecondLine(_option2);break;
-            case 3: _display->msgSecondLine(_option3);break;
-            default: _display->msgSecondLine(_option0); _optionSelected = 0;break;
-        }
-        _display->update();
+        displayCurrentFunction();
 
         // Allow turning the power off
         if (_button->isPressed(BTN_ONOFF))
@@ -77,65 +66,124 @@ void menu::optionSelect(void)
             while(_button->isPressed(BTN_MODE)); // waits for release
             _optionSelected = _optionSelected + 1 ;
             
-            if (_optionSelected == 2 && _option2 == NULL) 
-                _optionSelected = 0;
-            
-            if (_optionSelected == 3 && _option3 == NULL)
-                _optionSelected = 0;
+            if(_currentOption!=1)
+            {
+                if ((_optionSelected == 2) && (_option[2] == NULL)) 
+                {
+                    _optionSelected = 0;
+                }
+                
+                if ((_optionSelected == 3) && (_option[3] == NULL))
+                {
+                    _optionSelected = 0;
+                }
+            }
+            else
+            {
+                if (_optionSelected == 4)
+                {
+                    _optionSelected = 0;
+                }
+            }
         }
     }
 }
 
 
-void menu::processFunctionMenu(void)
+void menu::displayCurrentFunction(void)
 {
+    char secret[28];
+    char peakForce[28];
+    char units[28];
+    char autoOff[28];
 
-    // char peakForce[28];
-    // char units[28];
-    // char autoOff[28];
+    _display->setFont(u8g2_font_t0_12b_mf);
+    _display->clearBuffer();
 
-    // _display->setFont(u8g2_font_helvR08_tf);
-    // _display->clearBuffer();
-    
-    // sprintf(peakForce,"Peak Force: On");
-    // _display->msg(peakForce,5,20);
-
-    // sprintf(units,"Units: kN(kNewton)");
-    // _display->msg(units,5,30);
-
-    // sprintf(autoOff,"Auto Off: Enabled");
-    // _display->msg(autoOff,5,40);
-    // _display->update();
-    // delay(1000);
-
-    // TODO: turn off interrupt on change for the four buttons
-    
-    // Dispaly Status
-    switch(_var->getLang())
+    // secret menu
+    if(_currentOption == 3)
     {
-        case LANG_ES:
-            _optionTitle = DS_TITLE_ES;
-            _option0 = DS_OP0_ES;
-            _option1 = DS_OP1_ES;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;
-        case LANG_DE:
-            _optionTitle = DS_TITLE_DE;
-            _option0 = DS_OP0_DE;
-            _option1 = DS_OP1_DE;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;
-        default:
-            _optionTitle = DS_TITLE;
-            _option0 = DS_OP0;
-            _option1 = DS_OP1;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;     
+        _optionTitle = SM_TITILE;
+        _option[0] = SM_OP0;
+        _option[1] = SM_OP1;
+        _option[2] = NULL;
+        _option[3] = NULL;
+
+        sprintf(secret,"%s: %s",_optionTitle,_option[_optionSelected]);
+        _display->msg(secret,5,20);
+        _display->update();
+        return;
     }
 
+    
+    
+    // Dispaly Status
+    _optionTitle = DS_TITLE;
+    _option[0] = DS_OP0;
+    _option[1] = DS_OP1;
+    _option[2] = NULL;
+    _option[3] = NULL;
+
+    if(_currentOption == 0)
+    {
+        _display->setHighligthedFont();
+        sprintf(peakForce,"%s: %s",_optionTitle,_option[_optionSelected]);
+    }
+    else
+    {
+        sprintf(peakForce,"%s: %s",_optionTitle,_option[(uint8_t)_var->getDisplayStatus()]);
+    }
+    _display->msg(peakForce,5,20);
+    _display->setnormalFont();
+
+    //Unit Select
+    _optionTitle = U_TITLE;
+    _option[0] = U_OP0;
+    _option[2] = U_OP2;
+ 
+    if(_var->unitFamily!=FAMILY_LOW_FORCE)
+    {
+        _option[3] = KNEWTON;
+    }
+    _option[1] = NEWTON;
+
+    if(_currentOption == 1)
+    {
+        
+        _display->setHighligthedFont();
+        sprintf(units,"%s: %s",_optionTitle,_option[_optionSelected]);    
+    }
+    else
+    {
+        sprintf(units,"%s: %s",_optionTitle,_option[(uint8_t)_var->getUnits()]);
+    }
+    _display->msg(units,5,40);
+    _display->setnormalFont();
+
+    //autoOff select
+    _optionTitle = AO_TITLE;
+    _option[0] = AO_OP0;
+    _option[1] = AO_OP1;
+    _option[2] = NULL;
+    _option[3] = NULL;
+
+    if(_currentOption == 2)
+    {
+        _display->setHighligthedFont(); 
+        sprintf(autoOff,"%s: %s",_optionTitle,_option[_optionSelected]); 
+    }
+    else
+    {
+        sprintf(autoOff,"%s: %s",_optionTitle,_option[(uint8_t)_var->getIsAutoOff()]); 
+    }
+    _display->msg(autoOff,5,60);
+    _display->setnormalFont();
+    _display->update();
+}
+
+void menu::processFunctionMenu(void)
+{
+    _currentOption = 0;
     _optionSelected = (uint8_t)_var->getDisplayStatus();
     optionSelect();
 
@@ -145,31 +193,7 @@ void menu::processFunctionMenu(void)
         _var->setDisplayStatus((enum DISPLAY_STATUS)_optionSelected);
     }
 
-    //Unit Select
-    switch(_var->getLang())
-    {
-        case LANG_ES:
-            _optionTitle = U_TITLE_ES;
-            _option0 = U_OP0_ES;
-            _option2 = U_OP2_ES;
-            break;
-        case LANG_DE:
-            _optionTitle = U_TITLE_DE;
-            _option0 = U_OP0_DE;
-            _option2 = U_OP2_DE;
-            break;
-        default:
-            _optionTitle = U_TITLE;
-            _option0 = U_OP0;
-            _option2 = U_OP2;
-            break;     
-    }
-
-    if(_var->unitFamily!=FAMILY_LOW_FORCE)
-    {
-        _option3 = KNEWTON;
-    }
-    _option1 = NEWTON;
+    _currentOption = 1;
     _optionSelected = _var->getUnits();
     optionSelect();
 
@@ -180,56 +204,10 @@ void menu::processFunctionMenu(void)
         _sensor->initUnits();
     }
 
-    //autoOff select
-    switch(_var->getLang())
-    {
-        case LANG_ES:
-            _optionTitle = AO_TITLE_ES;
-            _option0 = AO_OP0_ES;
-            _option1 = AO_OP1_ES;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;
-        case LANG_DE:
-            _optionTitle = AO_TITLE_DE;
-            _option0 = AO_OP0_DE;
-            _option1 = AO_OP1_DE;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;
-        default:
-            _optionTitle = AO_TITLE;
-            _option0 = AO_OP0;
-            _option1 = AO_OP1;
-            _option2 = NULL;
-            _option3 = NULL;
-            break;  
-    }
-
+    _currentOption = 2;
     _optionSelected = _var->getIsAutoOff();
     optionSelect();
     _var->setIsAutoOff(_optionSelected);
-
-    // //language menu
-    // switch(_var->getLang())
-    // {
-    //     case LANG_ES:
-    //         _optionTitle = L_TITLE_ES;
-    //         break;
-    //     case LANG_DE:
-    //         _optionTitle = L_TITLE_DE;
-    //         break;
-    //     default:
-    //         _optionTitle = L_TITLE;
-    //         break;  
-    // }
-
-    // _option0 = ENG;
-    // _option1 = DE;
-    // _option2 = ES;
-    // _optionSelected = _var->getLang();
-    // optionSelect();
-    // _var->setLang(_optionSelected);
 
     // TODO re-enable interrupt on change for the buttons
 
@@ -300,12 +278,7 @@ void menu::processSecretMenu(void)
     char adcGain[9];
     //TODO: turn off interrupt for buttons except onff button
     
-    delay(300);
-    _display->clearBuffer();
-    _optionTitle = SM_TITILE;
-    _option0 = SM_OP0;
-    _option1 = SM_OP1;
-
+    _currentOption = 3;
     _optionSelected = _var->isRawMode;
     optionSelect();
     _var->isRawMode = _optionSelected;
@@ -322,6 +295,8 @@ void menu::processSecretMenu(void)
         _sensor->initUnits();
     }
 
+    delay(300);
+    _display->clearBuffer();
     // show current ADC gain
     sprintf(adcGain,"   %5d",_sensor->getAdcGain());
     _display->msg("FScale: ",adcGain,1500,10,true);

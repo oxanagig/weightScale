@@ -27,6 +27,7 @@ class display
     void msgSecondLine(const char* inputMessage);
     void msg(const char* firstLine, const char*secondLine,uint16_t holdTime, uint16_t blinkWait,bool clear);
     void msg(const char* inputMessage,uint16_t x, uint16_t y);
+    void msg(const char* inputMessage);
     void setValueFormat(enum FAMILY family);
     void setDisplayStatus(enum DISPLAY_STATUS display_status);
     void displaySensorValue(int valueDisplayLine);
@@ -34,6 +35,9 @@ class display
     void clearBuffer(void);
     void clearDisplay(void);
     void setSensorValue(uint16_t value);
+    void setHighligthedFont(void);
+    void setnormalFont(void);
+    void drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
     
   private:
     u8g2_display_t* _u8g2;
