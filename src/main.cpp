@@ -121,7 +121,7 @@ void findSensor(void)
         //Possible ways: wait for serial value (A), check if RX pin is high? (1) 
         variables.isConnected = sensor.getConnection();
         //TODO: Bypass for now
-        variables.isConnected = true;
+        //variables.isConnected = true;
         Display.update();
         delay(350);
         Display.clearDisplay();

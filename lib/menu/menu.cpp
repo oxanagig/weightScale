@@ -246,20 +246,20 @@ void menu::processModeMenu(void)
      // show calibrated data
     storedCalDate = _sensor->getCalDate();
     sprintf(calDate,"Calibrated: %4d-%02d",((storedCalDate / 100) + 2000),storedCalDate%100);
-    _display->msg(calDate,5,18);
+    _display->msg(calDate,5,21);
 
     // show cliabration due date
     storedCalDue = _sensor->getCalDue();
     sprintf(calDue,"Calibration Due: %4d-%02d",((storedCalDue / 100) + 2000),storedCalDue%100);
-    _display->msg(calDue,5,27);
+    _display->msg(calDue,5,33);
 
     //show sensor firmware version
     sprintf(version,"Sensor Firmware: %4d",_sensor->getSensorVersion());
-    _display->msg(version,5,36);
+    _display->msg(version,5,45);
 
     // show display firmware version
     sprintf(version,"Display Firmware: %02d%02d",DISPLAY_VERSION_YEAR,DISPLAY_VERSION_MONTH);
-    _display->msg(version,5,45);
+    _display->msg(version,5,57);
     _display->update();
     delay(500);
     // if(menuButtonProcess())
@@ -275,10 +275,8 @@ void menu::processModeMenu(void)
         }
         counter++;
         delay(10);
-        Serial.println(counter);
     }
     exitMenu();
-    Serial.println("exit display");
 }
 
 

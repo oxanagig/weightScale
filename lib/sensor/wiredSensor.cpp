@@ -32,7 +32,6 @@ uint16_t wiredSensor::getReading(void)
 bool wiredSensor::getConnection(void)
 {
     uint16_t memValue = getSerial();
-    Serial.println(memValue);
     if(memValue==0 ||memValue==65535)
         return false;
     
@@ -78,10 +77,10 @@ void wiredSensor::initFast(void)
     uint16_t calMonth,calYear;
 
     calMonth = readMemory(STORE_CAL_MONTH);
-    Serial.print("month");
+    Serial.print("month:");
     Serial.println(calMonth);
     calYear = readMemory(STORE_CAL_YEAR);
-    Serial.print("year");
+    Serial.print("year:");
     Serial.println(calYear);
     
     _calDue = ((calYear - 1999) * 100) + calMonth;  //cal due algorithm for old sensor
@@ -188,22 +187,31 @@ void wiredSensor::resetAdc()
 
 uint16_t wiredSensor::readMemory(uint16_t memStore)
 {
-    uint16_t memValue;
+    uint8_t memValue[2];
     memStore+=1000;
     delay(21);
     Wire.beginTransmission(0x50); 
     Wire.write(byte(memStore>>8));            
     Wire.write(byte(memStore&0xFF));           
     Wire.endTransmission();     
-    
+
+    Serial.print("address:");
+    Serial.print(memStore);
+    Serial.print(" value:");
+
 	Wire.requestFrom(0x50,2);
 	Wire.available();
-	memValue = Wire.read();
+	memValue[0] = Wire.read();
     Wire.available();
-	memValue += uint8_t(Wire.read()<<8);
+	memValue[1] = Wire.read();
+
+    Serial.print(memValue[0],HEX);
+    Serial.print(" ");
+    Serial.println(memValue[1],HEX);
+
     delay(52);
 
-    return memValue;
+    return ((uint16_t)memValue[1]) | ((uint16_t)memValue[0]<<8);
 }
 
 uint16_t wiredSensor::getSensorVersion(void)
@@ -218,5 +226,14 @@ void wiredSensor::setSystemZero(void)
 
 void wiredSensor::writeMemory(uint16_t memStore, uint16_t memValue)
 {
-// no memory write for
+    memStore+=1000;
+    delay(21);
+    Wire.beginTransmission(0x50); 
+    Wire.write(byte(memStore>>8));            
+    Wire.write(byte(memStore&0xFF)); 
+    Wire.write(byte(memValue>>8));
+    Wire.write(byte(memValue&0xFF));           
+    Wire.endTransmission();     
+    
+    delay(5);
 }
