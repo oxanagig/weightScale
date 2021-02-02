@@ -30,7 +30,8 @@ enum SYS_STATE
     DISPLAY_MEASUREMENT,
     DISPLAY_MENU,
     DISPLAY_STATUS,
-    DISPLAY_SECRET
+    DISPLAY_SECRET,
+    SYSTEM_OFF
 };
 
 enum SYS_STATE systemState = NO_SENSOR;
@@ -106,7 +107,7 @@ void findSensor(void)
     enableButtonInterrupt(BTN_ONOFF);
 
     Display.clearBuffer();
-
+    variables.isConnected = sensor.getConnection();
     while(variables.isConnected==false)
     {
         switch(variables.getLang())
@@ -121,8 +122,6 @@ void findSensor(void)
         //Check for wired serial connection -- look for serial signature(?)
         //Possible ways: wait for serial value (A), check if RX pin is high? (1) 
         variables.isConnected = sensor.getConnection();
-        //TODO: Bypass for now
-        //variables.isConnected = true;
         Display.update();
         delay(350);
         Display.clearDisplay();
@@ -178,7 +177,9 @@ void displayOn(void)
     digitalWrite(MBAR_ONOFF,HIGH);
     digitalWrite(DISPLAY_RESET_PIN,HIGH); 
     delay(350); //increased pause value to fix "while plugged in" connection issue (still says 'attach sensor') (1507)
-    
+    Display.begin();
+    u8g2.setBusClock(100000L);
+    u8g2.setFont(u8g2_font_ncenB14_tr);
     //Record number of uses
     variables.setDispalyUses(variables.getDisplayUses()+1);
     
@@ -199,16 +200,15 @@ void displaySleep(void)
 
     // initialize gobal variables
     variables.isConnected = false;
-    //lcdBlinkWait = 10;
-    //lcdWait = 350;
     variables.autoOffCount = 0;
     Menu.setMenuExit(false);
     // clear interrupt on change??
     variables.sleepMode = true;
-
+    systemState = SYSTEM_OFF;
+    disableAllButtonInterrupt();
     enableButtonInterrupt(BTN_ONOFF);
-    // nRF5x_lowPower.enableWakeupByInterrupt(BTN_ONOFF, HIGH);
-    // nRF5x_lowPower.powerMode(POWER_MODE_OFF);
+    sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
+    __WFE();
 }
 
 //  Checks how long the display has been on with the SAME value.
@@ -243,18 +243,22 @@ void buttonONFFInterruptHandler(void)
     static uint32_t last_interrupt_time = 0;
     uint32_t interrupt_time = millis();
     
-    if(variables.sleepMode)
+    // If interrupts come faster than debouce time, assume it's a bounce and ignore
+    if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
     {
-        // If interrupts come faster than debouce time, assume it's a bounce and ignore
-        if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
+        //if(Button.isPressed(BTN_ONOFF))
+        while(Button.isPressed(BTN_ONOFF));
+        DEBUG_MSG("BTN_ONOFF\n");
+        if(variables.sleepMode)
         {
-            //if(Button.isPressed(BTN_ONOFF))
-            while(Button.isPressed(BTN_ONOFF));
-            DEBUG_MSG("BTN_OFF\n");
-            displayOn();
+            systemState = NO_SENSOR;
         }
-        last_interrupt_time = interrupt_time;
+        else
+        {
+            systemState = SYSTEM_OFF;
+        }
     }
+    last_interrupt_time = interrupt_time;
     
 }
 
@@ -328,20 +332,10 @@ void setup() {
   digitalWrite(MBAR_ONOFF,LOW);
 
   variables.begin();
-
-  Display.begin();
-
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   adc.begin();
   sensor.begin();
-  u8g2.setBusClock(100000L);
-  u8g2.setFont(u8g2_font_ncenB14_tr);
-
-
-  //nrf_gpio_cfg_sense_input(29, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-  //attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), intHandler, RISING);
-  //detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
 
   digitalWrite(DISPLAY_RESET_PIN,HIGH);
   digitalWrite(MBAR_ONOFF,HIGH);
@@ -383,7 +377,7 @@ void loop()
             {
                 systemState = DISPLAY_MENU;
             }
-                Button.clearPressState();
+            Button.clearPressState();
 
             //DEBUG_MSG("read sensor value: ");
             adcReading = sensor.getReading(); 
@@ -432,6 +426,8 @@ void loop()
             systemState = DISPLAY_MEASUREMENT;
             break;
 
+        case SYSTEM_OFF:
+            displaySleep();
         default:
             break;
     }
