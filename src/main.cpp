@@ -12,6 +12,7 @@
 #define INTERRUPT_PIN   PIN_BUTTON1
 #define LOOP_CYCLES     100
 #define CYCLE_TIME_MS   10
+#define DEBOUNCE_TIME   100
 
 #ifdef DEBUG
 #define DEBUG_MSG(msg) (Serial.print(msg))
@@ -205,7 +206,7 @@ void displaySleep(void)
     // clear interrupt on change??
     variables.sleepMode = true;
 
-    //enableButtonInterrupt(BTN_ONOFF);
+    enableButtonInterrupt(BTN_ONOFF);
     // nRF5x_lowPower.enableWakeupByInterrupt(BTN_ONOFF, HIGH);
     // nRF5x_lowPower.powerMode(POWER_MODE_OFF);
 }
@@ -244,8 +245,8 @@ void buttonONFFInterruptHandler(void)
     
     if(variables.sleepMode)
     {
-        // If interrupts come faster than 200ms, assume it's a bounce and ignore
-        if (interrupt_time - last_interrupt_time > 200)
+        // If interrupts come faster than debouce time, assume it's a bounce and ignore
+        if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
         {
             //if(Button.isPressed(BTN_ONOFF))
             while(Button.isPressed(BTN_ONOFF));
@@ -266,12 +267,11 @@ void buttonFuncInterruptHandler(void)
         displaySleep();
     else
     {
-        if (interrupt_time - last_interrupt_time > 200)
+        if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
         {
             while(Button.isPressed(BTN_FUNC));
             DEBUG_MSG("func pressed\n");
             Button.setPressed(BTN_FUNC);
-            //Menu.functionMenu();
         }
     }
 }
@@ -284,12 +284,11 @@ void buttonZeroInterruptHandler(void)
         displaySleep();
     else
     {
-        if (interrupt_time - last_interrupt_time > 200)
+        if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
         {
             while(Button.isPressed(BTN_ZERO));
             DEBUG_MSG("zero pressed\n");
             Button.setPressed(BTN_ZERO);
-            //sensor.setSystemZero();
         }
         last_interrupt_time = interrupt_time;
     }
@@ -304,12 +303,11 @@ void buttonModeInterruptHandler(void)
         displaySleep();
     else
     {
-        if (interrupt_time - last_interrupt_time > 200)
+        if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
         {
             while(Button.isPressed(BTN_MODE));
             DEBUG_MSG("mode presssed\n");
             Button.setPressed(BTN_MODE);
-            //Menu.modeMenu();
         }
         last_interrupt_time = interrupt_time;
     }
@@ -410,10 +408,8 @@ void loop()
             Display.clearBuffer();   
             Display.setSensorValue(adcReading);
             Display.setValueFormat(FAMILY_STANDARD_FORCE);
-            //DEBUG_MSG("display first line\n");
             Display.displaySensorValue(0);
             Display.setDisplayStatus(variables.getDisplayStatus());
-            //DEBUG_MSG("display second line\n");
             Display.displaySensorValue(1);
             Display.update();
             break;
