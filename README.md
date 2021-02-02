@@ -6,6 +6,11 @@ The code is developed based on Arduino framework in Platform IO based on Visual 
 
 - [Platform IO Installation](https://platformio.org/install/ide?install=vscode)
 
+## Hardware Assembly
+
+Due to the layout mistake, the controller board will need to installed like shown below:
+![board](/image/board.png)
+
 
 ## Load and Program Project
 
