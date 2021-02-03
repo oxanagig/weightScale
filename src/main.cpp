@@ -8,7 +8,7 @@
 #include <menu.h>
 #include <gVariables.h>
 
-#define DEBUG 
+//#define DEBUG 
 #define INTERRUPT_PIN   PIN_BUTTON1
 #define LOOP_CYCLES     100
 #define CYCLE_TIME_MS   10
@@ -117,7 +117,7 @@ void findSensor(void)
             default:       Display.msgFirstLine("Attach  ");break;
         }
 
-        Display.msgSecondLine("Sensor  ");
+        Display.msgSecondLine("Sensor");
 
         //Check for wired serial connection -- look for serial signature(?)
         //Possible ways: wait for serial value (A), check if RX pin is high? (1) 
@@ -133,8 +133,14 @@ void findSensor(void)
         }
     }
 
+    Display.clearBuffer();
+    Display.msgFirstLine("Sensor");
+    Display.msgSecondLine("Attached");
+    Display.update();
+    delay(1000);
     enableAllButtonInterrupt();
-    delay(100);
+    Display.clearBuffer();
+    adc.begin();
     startSensor();
 }
 
@@ -151,10 +157,10 @@ void startSensor(void)
     {
         variables.setUnits(UNIT_N);
     }
-
+    
     sensor.initFast();
     sensor.initUnits();
-
+    
     switch(variables.getLang())
     {
         case LANG_ES : Display.msgFirstLine("Cal. Deb");break;
@@ -333,8 +339,6 @@ void setup() {
 
   variables.begin();
   Serial.begin(115200);
-  
-  adc.begin();
   sensor.begin();
 
   digitalWrite(DISPLAY_RESET_PIN,HIGH);
