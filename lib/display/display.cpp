@@ -309,6 +309,10 @@ void display::displaySensorValue(int valueDisplayLine)
         {
             _u8g2->setCursor(LCDWidth - 25, 55);
         }
+        else if(_valueUnits==UNIT_LBF)
+        {
+            _u8g2->setCursor(LCDWidth - 28, 55);
+        }
         else
         {
             _u8g2->setCursor(LCDWidth - 35, 55);
@@ -485,6 +489,10 @@ void display::displaySensorValue(int valueDisplayLine)
         else if(_valueUnits==UNIT_KN)
         {
             _u8g2->setCursor(LCDWidth - 25, 55);
+        }
+        else if(_valueUnits==UNIT_LBF)
+        {
+            _u8g2->setCursor(LCDWidth - 28, 55);
         }
         else
         {
