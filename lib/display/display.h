@@ -13,6 +13,10 @@
 
 #define u8g2_display_t U8G2_SSD1309_128X64_NONAME2_F_HW_I2C 
 
+#define LCDWidth                        _u8g2->getDisplayWidth()
+#define ALIGN_CENTER(t)                 ((LCDWidth - (_u8g2->getUTF8Width(t))) / 2)
+#define ALIGN_RIGHT(t)                  (LCDWidth -  _u8g2->getUTF8Width(t))
+#define ALIGN_LEFT                      5
 /*
 * This class will interface U8g2 library.
 */
@@ -38,6 +42,7 @@ class display
     void setHighligthedFont(void);
     void setnormalFont(void);
     void drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
+    //void msgRightJustified(const char* inputMessage,uint32_t length,uint8_t x, uint8_t y);
     
   private:
     u8g2_display_t* _u8g2;

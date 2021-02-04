@@ -33,15 +33,15 @@ class menu
     const char DS_OP1[9] = "On";
 
     const char U_TITLE[9] = "Units";
-    const char U_OP0[15] = "lb-F(lb Force)";
-    const char U_OP2[15] = "kg-F(Kg Force)";
+    const char U_OP0[15] = "lb Force";
+    const char U_OP2[15] = "Kg Force";
 
-    const char AO_TITLE[9] = "AutoOff";
-    const char AO_OP0[9] = "Off";
-    const char AO_OP1[9] = "On";
+    const char AO_TITLE[9] = "Auto Off";
+    const char AO_OP0[9] = "Enabled";
+    const char AO_OP1[9] = "Disabled";
 
-    const char KNEWTON[12]="kN(kNewton)";
-    const char NEWTON[10]="N(Newton)";
+    const char KNEWTON[12]="kNewton";
+    const char NEWTON[10]="N";
 
     const char SM_TITILE[9] = "mV mode";
     const char SM_OP0[9] = "Off";

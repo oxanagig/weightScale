@@ -106,18 +106,20 @@ void findSensor(void)
 
     enableButtonInterrupt(BTN_ONOFF);
 
+    
     Display.clearBuffer();
     variables.isConnected = sensor.getConnection();
     while(variables.isConnected==false)
     {
+        Display.setFont(u8g2_font_t0_22b_mf);
         switch(variables.getLang())
         {
-            case LANG_ES : Display.msgFirstLine("Conectar");break;
-            case LANG_DE : Display.msgFirstLine("Anschl. ");break;
-            default:       Display.msgFirstLine("Attach  ");break;
+            case LANG_ES : Display.msg("Conectar",40,30);break;
+            case LANG_DE : Display.msg("Anschl.",40,30);break;
+            default:       Display.msg("Attach",35,25);break;
         }
 
-        Display.msgSecondLine("Sensor");
+        Display.msg("Sensor",35,45);
 
         //Check for wired serial connection -- look for serial signature(?)
         //Possible ways: wait for serial value (A), check if RX pin is high? (1) 
@@ -133,13 +135,7 @@ void findSensor(void)
         }
     }
 
-    Display.clearBuffer();
-    Display.msgFirstLine("Sensor");
-    Display.msgSecondLine("Attached");
-    Display.update();
-    delay(1000);
     enableAllButtonInterrupt();
-    Display.clearBuffer();
     adc.begin();
     startSensor();
 }
@@ -160,16 +156,19 @@ void startSensor(void)
     
     sensor.initFast();
     sensor.initUnits();
-    
+
+    Display.setFont(u8g2_font_t0_22b_mf);
+    Display.clearBuffer();
+
     switch(variables.getLang())
     {
-        case LANG_ES : Display.msgFirstLine("Cal. Deb");break;
-        case LANG_DE : Display.msgFirstLine("K.Fállig");break;
-        default:       Display.msgFirstLine("Cal. Due");break;
+        case LANG_ES : Display.msg("Cal. Deb",35,25);break;
+        case LANG_DE : Display.msg("K.Fállig",35,25);break;
+        default:       Display.msg("Cal. Due",25,25);break;
     }
     storedCalDue = sensor.getCalDue();
-    sprintf(calDate," %4d-%02d",((storedCalDue / 100) + 2000),storedCalDue%100);
-    Display.msgSecondLine(calDate);
+    sprintf(calDate,"%4d-%02d",((storedCalDue / 100) + 2000),storedCalDue%100);
+    Display.msg(calDate,30,45);
 
     Display.update();
     delay(1700);
@@ -395,6 +394,7 @@ void loop()
                 {
                     // sensor not found
                     findSensor();
+                    break;
                 }
                 
             }

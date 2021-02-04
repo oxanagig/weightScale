@@ -64,7 +64,8 @@ void display::msg(const char* firstLine, const char* secondLine,uint16_t waitTim
 */
 void display::msgFirstLine(const char* inputMessage)
 {
-    _u8g2->setCursor(5, 15);
+    _u8g2->setFont(u8g2_font_t0_22b_mf);
+    _u8g2->setCursor(5, 20);
     _u8g2->print(inputMessage);
 }
 
@@ -73,7 +74,8 @@ void display::msgFirstLine(const char* inputMessage)
 */
 void display::msgSecondLine(const char* inputMessage)
 {
-    _u8g2->setCursor(5, 30);
+    _u8g2->setFont(u8g2_font_t0_22b_mf);
+    _u8g2->setCursor(5, 60);
     _u8g2->print(inputMessage);
 }
 
@@ -245,24 +247,73 @@ void display::displaySensorValue(int valueDisplayLine)
     uint8_t _valueMaxLength;
     uint8_t _valueLength;
 
+    // get the current Unit
+    char unitStr[10];
+    switch(_var->getLang())
+    {
+        case LANG_ES:
+            switch(_valueUnits)
+            {
+                case UNIT_MV :  sprintf(unitStr,"mV" );break;
+                case UNIT_N :   sprintf(unitStr,"N " );break;
+                case UNIT_KN :  sprintf(unitStr,"kN" );break;
+                case UNIT_KGF : sprintf(unitStr,"kg-F" );break;
+                //case UNIT_PK :  sprintf(unitStr,"Pc" );break;
+                default :       sprintf(unitStr,"lb-F" );break;
+            }
+            break;                               
+        case LANG_DE:
+            switch(_valueUnits)
+            {
+                case UNIT_MV :  sprintf(unitStr,"mV");break;
+                case UNIT_N :   sprintf(unitStr,"N ");break;
+                case UNIT_KN :  sprintf(unitStr,"kN");break;
+                case UNIT_KGF : sprintf(unitStr,"kg");break;
+                //case UNIT_PK :  sprintf(unitStr,"Sp");break;
+                default:        sprintf(unitStr,"Kr");break;
+            }
+        default:
+            switch(_valueUnits)
+            {
+                case UNIT_MV :  sprintf(unitStr,"mV");break;
+                case UNIT_N :   sprintf(unitStr,"N ");break;
+                case UNIT_KN :  sprintf(unitStr,"kN");break;
+                case UNIT_KGF : sprintf(unitStr,"kg-F");break;
+                //case UNIT_PK :  sprintf(unitStr,"Pk");break;
+                default:        sprintf(unitStr,"lb-F");break;
+            }
+    }
+
     // Select which LCD line to use before running
     if(valueDisplayLine == 0)
     {
         // first line for text
-        _u8g2->setCursor(5, 30);
-        _u8g2->setFont(u8g2_font_helvB24_tf);
+        _u8g2->setCursor(1, 35);
+        _u8g2->setFont(u8g2_font_inb30_mf);
     }
     else
     {
         // second line for text
-        _u8g2->setCursor(5, 45);
-        _u8g2->setFont(u8g2_font_helvB12_tr);
+        _u8g2->setFont(u8g2_font_helvB12_tr); 
+        _u8g2->setCursor(3, 55);
     }   
 
     if(_skipDisplay == true)
     { 
         _skipDisplay = false;
-        _u8g2->print("            ");
+        if(_valueUnits==UNIT_N)
+        {
+            _u8g2->setCursor(LCDWidth - 15, 55);
+        }
+        else if(_valueUnits==UNIT_KN)
+        {
+            _u8g2->setCursor(LCDWidth - 25, 55);
+        }
+        else
+        {
+            _u8g2->setCursor(LCDWidth - 35, 55);
+        }
+        _u8g2->print(unitStr);
         return;
     }         
     
@@ -392,7 +443,8 @@ void display::displaySensorValue(int valueDisplayLine)
             }
             else
             {
-                _u8g2->print(" ");
+                if(valueDisplayLine == 0)
+                    _u8g2->print(" ");
             }                          
             _valueLength = _valueLength - 1;
         }
@@ -422,49 +474,23 @@ void display::displaySensorValue(int valueDisplayLine)
     {
         _u8g2->print(" ");
     }
-        
-    //Display the units for the first line (always 2 chars)  
-    _u8g2->setFont(u8g2_font_helvB12_tr);
-    char unitStr[10];
-    switch(_var->getLang())
-    {
-        case LANG_ES:
-            switch(_valueUnits)
-            {
-                case UNIT_MV :  sprintf(unitStr,"mV" );break;
-                case UNIT_N :   sprintf(unitStr,"N " );break;
-                case UNIT_KN :  sprintf(unitStr,"kN" );break;
-                case UNIT_KGF : sprintf(unitStr,"kg" );break;
-                //case UNIT_PK :  sprintf(unitStr,"Pc" );break;
-                default :       sprintf(unitStr,"lb" );break;
-            }
-            break;                               
-        case LANG_DE:
-            switch(_valueUnits)
-            {
-                case UNIT_MV :  sprintf(unitStr,"mV");break;
-                case UNIT_N :   sprintf(unitStr,"N ");break;
-                case UNIT_KN :  sprintf(unitStr,"kN");break;
-                case UNIT_KGF : sprintf(unitStr,"kg");break;
-                //case UNIT_PK :  sprintf(unitStr,"Sp");break;
-                default:        sprintf(unitStr,"Kr");break;
-            }
-        default:
-            switch(_valueUnits)
-            {
-                case UNIT_MV :  sprintf(unitStr,"mV");break;
-                case UNIT_N :   sprintf(unitStr,"N ");break;
-                case UNIT_KN :  sprintf(unitStr,"kN");break;
-                case UNIT_KGF : sprintf(unitStr,"kg");break;
-                //case UNIT_PK :  sprintf(unitStr,"Pk");break;
-                default:        sprintf(unitStr,"lb");break;
-            }
-    }     
-    
-    _u8g2->print(unitStr);
+
     if(valueDisplayLine==1)
     {
         _u8g2->print(" Peak");
+        if(_valueUnits==UNIT_N)
+        {
+            _u8g2->setCursor(LCDWidth - 15, 55);
+        }
+        else if(_valueUnits==UNIT_KN)
+        {
+            _u8g2->setCursor(LCDWidth - 25, 55);
+        }
+        else
+        {
+            _u8g2->setCursor(LCDWidth - 35, 55);
+        }
+        _u8g2->print(unitStr);
     }
 }
 
@@ -508,3 +534,14 @@ void display::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
     _u8g2->drawBox(x,y,w,h);
 }
+
+// void display::msgRightJustified(const char* input, uint32_t length,uint8_t x, uint8_t y,uint8_t fontWidth)
+// {
+//     // uint32_t i;
+//     // _u8g2->setCursor(x,y);
+
+//     // for(i=0;i<length;i++)
+//     // {
+
+//     // }
+// }
