@@ -56,8 +56,12 @@
 #define STORE_WAKE_INTERVAL     58   // If set, sensor wakes up ever N ms as defined (multiplier)
 #define STORE_WAKE_OVER_MV      60   // mV difference/threshold to check for -- holds for 200 ms, then turns on if wake interval is set
 
-
-
+#define INITIALIZED_FLAG         0
+#define DISPLAY_STATUS_STORE     5       // (display)
+#define UNITS_STATUS_STORE       6
+#define AUTO_OFF_STORE           7       // (display)
+#define LANGUAGE_STORE           8
+#define NUM_USES_STORE           24      // Stores number of uses (also stores to sensor)
 
 enum FAMILY
 {
@@ -140,5 +144,9 @@ class gVariables
         uint8_t _lang;
         uint8_t _displayUses;
         uint8_t _units;
+        uint8_t _buffer[512];
+        uint16_t _pagesize;
+        void _readFlash(void);
+        void _writeFlash(void);
 };
 #endif

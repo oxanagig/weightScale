@@ -8,7 +8,7 @@
 #include <menu.h>
 #include <gVariables.h>
 
-//#define DEBUG 
+#define DEBUG 
 #define INTERRUPT_PIN   PIN_BUTTON1
 #define LOOP_CYCLES     100
 #define CYCLE_TIME_MS   10
@@ -187,7 +187,9 @@ void displayOn(void)
     u8g2.setFont(u8g2_font_ncenB14_tr);
     //Record number of uses
     variables.setDispalyUses(variables.getDisplayUses()+1);
-    
+    DEBUG_MSG("display use:");
+    DEBUG_MSG(variables.getDisplayUses());
+    DEBUG_MSG('\n');
     enableButtonInterrupt(BTN_ONOFF);
     delay(50);
 
@@ -336,10 +338,9 @@ void setup() {
   digitalWrite(DISPLAY_RESET_PIN,LOW);
   digitalWrite(MBAR_ONOFF,LOW);
 
-  variables.begin();
   Serial.begin(115200);
   sensor.begin();
-
+  
   digitalWrite(DISPLAY_RESET_PIN,HIGH);
   digitalWrite(MBAR_ONOFF,HIGH);
 }
@@ -354,6 +355,7 @@ void loop()
             // this a blocking code
             // it will loop inside the function until find the sensor
             // or it reaches the auto off time limit
+            variables.begin();
             displayOn();
             systemState = DISPLAY_MEASUREMENT;
             break;
@@ -440,4 +442,3 @@ void loop()
     //cycles++;
     delay(CYCLE_TIME_MS);
 }
-

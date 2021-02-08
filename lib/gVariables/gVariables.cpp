@@ -4,27 +4,10 @@
   Created by Xiang Gao, November 28, 2020.
 */
 #include "gVariables.h"
-#include "Adafruit_LittleFS.h"
+#include <Adafruit_SPIFlash.h>
 
-// variables used by the filesystem
-lfs_t lfs;
-lfs_file_t file;
-
-// // configuration of the filesystem is provided by this struct
-// const struct lfs_config cfg = {
-//     // block device operations
-//     .read  = user_provided_block_device_read,
-//     .prog  = user_provided_block_device_prog,
-//     .erase = user_provided_block_device_erase,
-//     .sync  = user_provided_block_device_sync,
-
-//     // block device configuration
-//     .read_size = 16,
-//     .prog_size = 16,
-//     .block_size = 4096,
-//     .block_count = 128,
-//     .lookahead = 128,
-// };
+Adafruit_FlashTransport_QSPI flashTransport;
+Adafruit_SPIFlash onboardFlash(&flashTransport);
 
 gVariables::gVariables(void)
 {
@@ -36,24 +19,56 @@ gVariables::gVariables(void)
 */
 void gVariables::begin(void)
 {
-// Default settings on first application run after flashing firmware
-// DATA @5,   DISPLAY_FORCE' Display status store (force)
-// DATA @6,   UNIT_N     ' Units status store (lbf)
-// DATA @7,   TRUE         ' Auto off store (on)
-// DATA @8,   LANG_EN      ' Language store (English)
-// data @NUM_USES_STORE, 0 
-// data @NUM_USES_STORE+1, 0
-// Read DISPLAY_STATUS_STORE, displayStatus
-// Read UNITS_STATUS_STORE, units
-// Read AUTO_OFF_STORE, isAutoOff
-// READ LANGUAGE_STORE, lang 
+  Serial.print("Starting up onboard QSPI Flash...");
+  onboardFlash.begin();
+  Serial.println("Done");
+  Serial.println("Onboard Flash information");
+  Serial.print("JEDEC ID: 0x");
+  Serial.println(onboardFlash.getJEDECID(), HEX);
+  Serial.print("Flash size: ");
+  Serial.print(onboardFlash.size() / 1024);
+  Serial.println(" KB");
 
-  // for test purpse
-  _displayStatus = DISPLAY_FORCE;
-  _units = UNIT_N;
-  _isAutoOff = true;
-  _lang = LANG_EN;
-  _displayUses = 0;
+  _pagesize = onboardFlash.pageSize();
+  _readFlash();
+  
+  if(_buffer[INITIALIZED_FLAG]!=0x55)
+  {
+    Serial.println("initializing flash");
+    memset(_buffer,0,_pagesize);
+
+    _buffer[INITIALIZED_FLAG] = 0x55;
+    _buffer[DISPLAY_STATUS_STORE]=DISPLAY_FORCE;
+    _buffer[UNITS_STATUS_STORE]=UNIT_N;
+    _buffer[AUTO_OFF_STORE]=1;
+    _buffer[LANGUAGE_STORE]=LANG_EN;
+    _buffer[NUM_USES_STORE]=0;
+    _buffer[NUM_USES_STORE+1]=0;
+
+    _writeFlash();
+  }
+  else
+  {
+    Serial.println("flash initialized");
+  }
+
+  Serial.print("selected Unit:");
+  Serial.println(_buffer[UNITS_STATUS_STORE]);
+  Serial.print("display status:");
+  Serial.println(_buffer[DISPLAY_STATUS_STORE]);
+  Serial.print("auto off status:");
+  Serial.println(_buffer[AUTO_OFF_STORE]);
+  Serial.print("flash flag:");
+  Serial.println(_buffer[INITIALIZED_FLAG]);
+
+  Serial.print("number of use:");
+  Serial.println((uint16_t)_buffer[NUM_USES_STORE]+((uint16_t)_buffer[NUM_USES_STORE+1]<<8));
+  _displayStatus = (enum DISPLAY_STATUS)_buffer[DISPLAY_STATUS_STORE];
+  _units = _buffer[UNITS_STATUS_STORE];
+  _isAutoOff = _buffer[AUTO_OFF_STORE];
+  _lang = _buffer[LANGUAGE_STORE];
+  _displayUses = (uint16_t)_buffer[NUM_USES_STORE]+((uint16_t)_buffer[NUM_USES_STORE+1]<<8);
+
 }
 
 
@@ -65,6 +80,9 @@ enum DISPLAY_STATUS gVariables::getDisplayStatus(void)
 void gVariables::setDisplayStatus(enum DISPLAY_STATUS displayStatus)
 {
   _displayStatus = displayStatus;
+  _buffer[DISPLAY_STATUS_STORE] = _displayStatus;
+  _writeFlash();
+  _readFlash(); // read back the flash to updat the cache buffer
 }
 
 uint8_t gVariables::getUnits(void)
@@ -75,6 +93,9 @@ uint8_t gVariables::getUnits(void)
 void gVariables::setUnits(uint8_t units)
 {
   _units = units;
+  _buffer[UNITS_STATUS_STORE] = _units;
+  _writeFlash();
+  _readFlash(); // read back the flash to updat the cache buffer
 }
 
 bool gVariables::getIsAutoOff(void)
@@ -85,6 +106,9 @@ bool gVariables::getIsAutoOff(void)
 void gVariables::setIsAutoOff(bool isAutoOff)
 {
   _isAutoOff = isAutoOff;
+  _buffer[AUTO_OFF_STORE] = _isAutoOff;
+  _writeFlash();
+  _readFlash(); // read back the flash to updat the cache buffer
 }
 
 uint8_t gVariables::getLang(void)
@@ -95,6 +119,9 @@ uint8_t gVariables::getLang(void)
 void gVariables::setLang(uint8_t lang)
 {
   _lang = lang;
+  _buffer[LANGUAGE_STORE] = _lang;
+  _writeFlash();
+  _readFlash(); // read back the flash to updat the cache buffer
 }
 
 uint16_t gVariables::getDisplayUses(void)
@@ -105,4 +132,19 @@ uint16_t gVariables::getDisplayUses(void)
 void gVariables::setDispalyUses(uint16_t use)
 {
   _displayUses = use;
+  _buffer[NUM_USES_STORE] = (uint8_t)(_displayUses&0xFF);
+  _buffer[NUM_USES_STORE+1] = (uint8_t)(_displayUses>>8);
+  _writeFlash();
+  _readFlash(); // read back the flash to updat the cache buffer
+}
+
+void gVariables::_readFlash(void)
+{
+  onboardFlash.readBuffer(0, _buffer, _pagesize);
+}
+
+void gVariables::_writeFlash(void)
+{
+  onboardFlash.eraseSector(0);
+  onboardFlash.writeBuffer(0,_buffer,_pagesize);
 }

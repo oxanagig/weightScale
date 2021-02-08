@@ -9,6 +9,7 @@
         "*.tcc": "cpp",
         "string_view": "cpp",
         "memory": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "*.txt": "c"
     }
 }

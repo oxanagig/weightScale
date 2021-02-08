@@ -23,3 +23,8 @@ Due to the layout mistake, the controller board will need to installed like show
 
 3. Find the **PROJECT TASKS** tab on the right panel and click Build, once it gets built succesfully, click Upoload to program the board.
 ![buildAndUpload](/image/buildAndUpload.png)
+
+
+## Useful Resources
+
+Font information: https://github.com/olikraus/u8g2/wiki/fntlistall
