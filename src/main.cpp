@@ -392,10 +392,10 @@ void loop()
         }
         Button.clearPressState();
 
-        //DEBUG_MSG("read sensor value: ");
+        DEBUG_MSG("read sensor value: ");
         adcReading = sensor.getReading();
-        //DEBUG_MSG(adcReading);
-        //DEBUG_MSG("\n");
+        DEBUG_MSG(adcReading);
+        DEBUG_MSG("\n");
 
         //if value is 0 or 65535, check the memory to make sure we're still connected
         if (adcReading == 0 || adcReading == 65535)
