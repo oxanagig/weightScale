@@ -26,12 +26,10 @@ void adc30::begin(void)
 
 void adc30::reset()
 {
-    delay(100);
     SPI.transfer(0xff);
     SPI.transfer(0xff);
     SPI.transfer(0xff);
     SPI.transfer(0xff);
-    delay(100);
 }
 /*
 * read the ADC value from the file register
@@ -104,7 +102,6 @@ void adc30::internalZeroCalib()
 void adc30::systemZeroCalib()
 {
     modeWrite();
-    delay(300);
     SPI.transfer(MR1_MODE_SYSTEM_ZERO_CALIBRATION);
     SPI.transfer(MR0_HIREF_5V);
     delay(300);
@@ -115,13 +112,10 @@ void adc30::systemZeroCalib()
  */
 void adc30::gainWrite(uint16_t gain)
 {
-    delay(100);
     SPI.transfer(CR_SINGLE_WRITE | CR_GAIN_REGISTER);
-    delay(100);
     SPI.transfer((uint8_t)(gain >> 8));
     SPI.transfer((uint8_t)(gain & 0xFF));
     SPI.transfer(0); // don't care the LSB 8bits
-    delay(100);
 }
 
 /**
@@ -130,12 +124,10 @@ void adc30::gainWrite(uint16_t gain)
 uint16_t adc30::gainRead(void)
 {
     uint16_t gain;
-    delay(100);
     SPI.transfer(CR_SINGLE_READ | CR_GAIN_REGISTER);
     gain = (uint16_t)SPI.transfer(READ_ONLY) << 8;
     gain += (uint16_t)SPI.transfer(READ_ONLY);
     SPI.transfer(READ_ONLY); // don't care the LSB 8bits
-    delay(100);
     return gain;
 }
 
