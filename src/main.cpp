@@ -8,7 +8,7 @@
 #include <menu.h>
 #include <gVariables.h>
 
-#define DEBUG
+//#define DEBUG
 #define INTERRUPT_PIN PIN_BUTTON1
 #define LOOP_CYCLES 100
 #define CYCLE_TIME_MS 10
@@ -155,7 +155,6 @@ void startSensor(void)
     }
 
     sensor.initFast();
-    sensor.initUnits();
 
     Display.setFont(u8g2_font_t0_12b_mf);
     Display.clearBuffer();
@@ -178,7 +177,8 @@ void startSensor(void)
     Display.msg(calDate, 30, 45);
 
     Display.update();
-    delay(1700);
+    sensor.initUnits();
+    delay(1000);
 }
 
 void displayOn(void)
@@ -187,7 +187,7 @@ void displayOn(void)
     // release display and sensor reset pin
     digitalWrite(MBAR_ONOFF, HIGH);
     digitalWrite(DISPLAY_RESET_PIN, HIGH);
-    delay(350); //increased pause value to fix "while plugged in" connection issue (still says 'attach sensor') (1507)
+    // delay(350); //increased pause value to fix "while plugged in" connection issue (still says 'attach sensor') (1507)
     Display.begin();
     u8g2.setBusClock(100000L);
     u8g2.setFont(u8g2_font_ncenB14_tr);
@@ -197,7 +197,7 @@ void displayOn(void)
     DEBUG_MSG(variables.getDisplayUses());
     DEBUG_MSG('\n');
     enableButtonInterrupt(BTN_ONOFF);
-    delay(50);
+    //delay(50);
 
     findSensor();
 }

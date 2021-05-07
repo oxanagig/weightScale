@@ -9,7 +9,7 @@
 /*
 * wiredSensor constructor
 */
-wiredSensor::wiredSensor(adc30* adc,gVariables* variables)
+wiredSensor::wiredSensor(adc30 *adc, gVariables *variables)
 {
     _adc = adc;
     _var = variables;
@@ -32,9 +32,9 @@ uint16_t wiredSensor::getReading(void)
 bool wiredSensor::getConnection(void)
 {
     uint16_t memValue = getSerial();
-    if(memValue==0 ||memValue==65535)
+    if (memValue == 0 || memValue == 65535)
         return false;
-    
+
     return true;
 }
 
@@ -51,17 +51,19 @@ uint16_t wiredSensor::getAdcGain(void)
 */
 bool wiredSensor::setAdcGain(uint16_t adcGain)
 {
-    Serial.println("setGain");
-    Serial.println(adcGain);
+    // Serial.println("setGain");
+    // Serial.println(adcGain);
     _adc->reset();
-    _adc->gainWrite(adcGain);    
+    _adc->gainWrite(adcGain);
     _adc->systemZeroCalib();
-    while(_adc->isReadyAndSteady());
+    while (_adc->isReadyAndSteady())
+        ;
     _adc->singleConvertMode();
-    while(_adc->isReadyAndSteady());
+    while (_adc->isReadyAndSteady())
+        ;
     _valueA = _adc->getValue();
-    
-    if(adcGain!=getAdcGain())
+
+    if (adcGain != getAdcGain())
     {
         return false;
     }
@@ -74,17 +76,17 @@ bool wiredSensor::setAdcGain(uint16_t adcGain)
 */
 void wiredSensor::initFast(void)
 {
-    uint16_t calMonth,calYear;
+    uint16_t calMonth, calYear;
 
     calMonth = readMemory(STORE_CAL_MONTH);
-    Serial.print("month:");
-    Serial.println(calMonth);
+    // Serial.print("month:");
+    // Serial.println(calMonth);
     calYear = readMemory(STORE_CAL_YEAR);
-    Serial.print("year:");
-    Serial.println(calYear);
-    
+    // Serial.print("year:");
+    // Serial.println(calYear);
+
     _calDue = ((calYear - 1999) * 100) + calMonth;  //cal due algorithm for old sensor
-    _calDate = ((calYear - 2000) * 100) + calMonth;// date calibrated
+    _calDate = ((calYear - 2000) * 100) + calMonth; // date calibrated
 
     _sensorVersion = 17; //00017 ' 17g (legacy)
     _var->unitFamily = FAMILY_STANDARD_FORCE;
@@ -111,10 +113,9 @@ void wiredSensor::zeroFast(void)
     _var->peakValue = 0;
     _valueA = 32768;
     _valueB = 32768;
-    _var->isZeroRun = true;    
+    _var->isZeroRun = true;
     delay(25); // Lowed by half (1507)
 }
-
 
 /*
 *   Universal zero sensor command -- depending on the sensor connected, it will be set to zero
@@ -122,13 +123,13 @@ void wiredSensor::zeroFast(void)
 */
 void wiredSensor::initUnits(void)
 {
-    
+
     setAdcGain(getGain());
 
     _var->peakValue = 0;
     _valueA = 32768;
     _valueB = 32768;
-    _var->isZeroRun = true;    
+    _var->isZeroRun = true;
     delay(25); // Halfed and removed from before peakvalue (1507)
 }
 
@@ -138,16 +139,26 @@ void wiredSensor::initUnits(void)
 uint16_t wiredSensor::getGain(void)
 {
     uint16_t gain;
-    switch(_var->getUnits())
+    switch (_var->getUnits())
     {
-        case UNIT_MV    :   gain = readMemory(STORE_MV_GAIN);break;
-        case UNIT_N     :   gain = readMemory(STORE_N_GAIN);break;
-        case UNIT_KGF   :   gain = readMemory(STORE_KGF_GAIN);break;
-        case UNIT_KN    :   gain = readMemory(STORE_N_GAIN);break;
-        default         :   gain = readMemory(STORE_LBF_GAIN);break;
+    case UNIT_MV:
+        gain = readMemory(STORE_MV_GAIN);
+        break;
+    case UNIT_N:
+        gain = readMemory(STORE_N_GAIN);
+        break;
+    case UNIT_KGF:
+        gain = readMemory(STORE_KGF_GAIN);
+        break;
+    case UNIT_KN:
+        gain = readMemory(STORE_N_GAIN);
+        break;
+    default:
+        gain = readMemory(STORE_LBF_GAIN);
+        break;
     }
 
-    delay(100);
+    //delay(100);
 
     return gain;
 }
@@ -188,30 +199,30 @@ void wiredSensor::resetAdc()
 uint16_t wiredSensor::readMemory(uint16_t memStore)
 {
     uint8_t memValue[2];
-    memStore+=1000;
-    delay(21);
-    Wire.beginTransmission(0x50); 
-    Wire.write(byte(memStore>>8));            
-    Wire.write(byte(memStore&0xFF));           
-    Wire.endTransmission();     
+    memStore += 1000;
+    //delay(21);
+    Wire.beginTransmission(0x50);
+    Wire.write(byte(memStore >> 8));
+    Wire.write(byte(memStore & 0xFF));
+    Wire.endTransmission();
 
-    Serial.print("address:");
-    Serial.print(memStore);
-    Serial.print(" value:");
+    // Serial.print("address:");
+    // Serial.print(memStore);
+    // Serial.print(" value:");
 
-	Wire.requestFrom(0x50,2);
-	Wire.available();
-	memValue[0] = Wire.read();
+    Wire.requestFrom(0x50, 2);
     Wire.available();
-	memValue[1] = Wire.read();
+    memValue[0] = Wire.read();
+    Wire.available();
+    memValue[1] = Wire.read();
 
-    Serial.print(memValue[0],HEX);
-    Serial.print(" ");
-    Serial.println(memValue[1],HEX);
+    // Serial.print(memValue[0],HEX);
+    // Serial.print(" ");
+    // Serial.println(memValue[1],HEX);
 
-    delay(52);
+    // delay(52);
 
-    return ((uint16_t)memValue[1]) | ((uint16_t)memValue[0]<<8);
+    return ((uint16_t)memValue[1]) | ((uint16_t)memValue[0] << 8);
 }
 
 uint16_t wiredSensor::getSensorVersion(void)
@@ -226,14 +237,14 @@ void wiredSensor::setSystemZero(void)
 
 void wiredSensor::writeMemory(uint16_t memStore, uint16_t memValue)
 {
-    memStore+=1000;
+    memStore += 1000;
     delay(21);
-    Wire.beginTransmission(0x50); 
-    Wire.write(byte(memStore>>8));            
-    Wire.write(byte(memStore&0xFF)); 
-    Wire.write(byte(memValue>>8));
-    Wire.write(byte(memValue&0xFF));           
-    Wire.endTransmission();     
-    
+    Wire.beginTransmission(0x50);
+    Wire.write(byte(memStore >> 8));
+    Wire.write(byte(memStore & 0xFF));
+    Wire.write(byte(memValue >> 8));
+    Wire.write(byte(memValue & 0xFF));
+    Wire.endTransmission();
+
     delay(5);
 }
