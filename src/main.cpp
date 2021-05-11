@@ -93,6 +93,7 @@ void enableButtonInterrupt(int button)
 
 void findSensor(void)
 {
+    static bool attachSensorDisplayed = false;
     // no sensor is connected (communication timeout)
     variables.isConnected = false;
     // isRpm = false; isRpm is not used in the oringal code
@@ -106,36 +107,38 @@ void findSensor(void)
     variables.isConnected = sensor.getConnection();
     while (variables.isConnected == false)
     {
-        Display.setFont(u8g2_font_t0_22b_mf);
-        switch (variables.getLang())
+        if (attachSensorDisplayed == false)
         {
-        case LANG_ES:
-            Display.msg("Conectar", 40, 30);
-            break;
-        case LANG_DE:
-            Display.msg("Anschl.", 40, 30);
-            break;
-        default:
-            Display.msg("Attach", 35, 25);
-            break;
+            Display.setFont(u8g2_font_t0_22b_mf);
+            switch (variables.getLang())
+            {
+            case LANG_ES:
+                Display.msg("Conectar", 40, 30);
+                break;
+            case LANG_DE:
+                Display.msg("Anschl.", 40, 30);
+                break;
+            default:
+                Display.msg("Attach", 35, 25);
+                break;
+            }
+
+            Display.msg("Sensor", 35, 45);
+
+            
+            Display.update();
+            attachSensorDisplayed = true;
         }
-
-        Display.msg("Sensor", 35, 45);
-
         //Check for wired serial connection -- look for serial signature(?)
         //Possible ways: wait for serial value (A), check if RX pin is high? (1)
         variables.isConnected = sensor.getConnection();
-        Display.update();
-        delay(350);
-        Display.clearDisplay();
-        delay(70);
-
+        delay(420);
         if (variables.getIsAutoOff())
         {
             autoOffCheck(0);
         }
     }
-
+    attachSensorDisplayed = false;
     enableAllButtonInterrupt();
     adc.begin();
     startSensor();
