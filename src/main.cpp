@@ -232,10 +232,11 @@ void autoOffCheck(int value)
 {
     static int oldValue;
 
-    value = (value & 0xff00) | (int)((value & 0xff) / 4);
+    // value = (value & 0xff00) | (int)((value & 0xff) / 4);
     DEBUG_MSG(value);
     DEBUG_MSG("\n");
-    if (oldValue == (value & 0xff))
+
+    if ((abs(oldValue - value) / 3) == 0)
     {
         variables.autoOffCount = variables.autoOffCount + 1;
 
@@ -251,7 +252,7 @@ void autoOffCheck(int value)
     else
         variables.autoOffCount = 0;
 
-    oldValue = value & 0xff;
+    oldValue = value;
 
     DEBUG_MSG(variables.autoOffCount);
     DEBUG_MSG("\n");

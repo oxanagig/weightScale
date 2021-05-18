@@ -36,8 +36,8 @@ private:
   const char U_OP2[15] = "kg Force";
 
   const char AO_TITLE[9] = "Auto Off";
-  const char AO_OP0[9] = "Enabled";
-  const char AO_OP1[9] = "Disabled";
+  const char AO_OP0[9] = "Disabled";
+  const char AO_OP1[9] = "Enabled";
 
   const char KNEWTON[12] = "kN     ";
   const char NEWTON[10] = "N";
