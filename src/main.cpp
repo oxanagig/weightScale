@@ -8,7 +8,7 @@
 #include <menu.h>
 #include <gVariables.h>
 
-//#define DEBUG
+#define DEBUG
 #define INTERRUPT_PIN PIN_BUTTON1
 #define LOOP_CYCLES 100
 #define CYCLE_TIME_MS 10
@@ -125,7 +125,6 @@ void findSensor(void)
 
             Display.msg("Sensor", 35, 45);
 
-            
             Display.update();
             attachSensorDisplayed = true;
         }
@@ -233,7 +232,9 @@ void autoOffCheck(int value)
 {
     static int oldValue;
 
-    value = (value & 0xff00) | (uint8_t)((value & 0xff) / 3);
+    value = (value & 0xff00) | (int)((value & 0xff) / 4);
+    DEBUG_MSG(value);
+    DEBUG_MSG("\n");
     if (oldValue == (value & 0xff))
     {
         variables.autoOffCount = variables.autoOffCount + 1;
@@ -251,6 +252,9 @@ void autoOffCheck(int value)
         variables.autoOffCount = 0;
 
     oldValue = value & 0xff;
+
+    DEBUG_MSG(variables.autoOffCount);
+    DEBUG_MSG("\n");
 }
 
 void buttonONFFInterruptHandler(void)
@@ -268,10 +272,12 @@ void buttonONFFInterruptHandler(void)
         if (variables.sleepMode)
         {
             systemState = NO_SENSOR;
+            NVIC_SystemReset();
         }
         else
         {
             systemState = SYSTEM_OFF;
+            displaySleep();
         }
     }
     last_interrupt_time = interrupt_time;
@@ -443,7 +449,7 @@ void loop()
         break;
 
     case SYSTEM_OFF:
-        displaySleep();
+        /* the system should be turned off inside interrupt */
     default:
         break;
     }
