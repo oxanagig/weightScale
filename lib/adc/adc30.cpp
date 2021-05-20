@@ -77,6 +77,16 @@ void adc30::idleMode()
 }
 
 /**
+ * Set Enter standby mode
+ */
+void adc30::standbyMode()
+{
+    modeWrite();
+    SPI.transfer(MR1_MODE_STANDBY);
+    SPI.transfer(MR0_HIREF_5V);
+}
+
+/**
  * Set internal full-scale calibration mode
  */
 void adc30::internalFullCalib()

@@ -13,6 +13,7 @@
 #define LOOP_CYCLES 100
 #define CYCLE_TIME_MS 10
 #define DEBOUNCE_TIME 100
+#define DFU_MAGIC_SKIP 0x6d
 
 #ifdef DEBUG
 #define DEBUG_MSG(msg) (Serial.print(msg))
@@ -42,6 +43,7 @@ display Display(&u8g2, &variables);
 wiredSensor sensor(&adc, &variables);
 menu Menu(&Display, &Button, &sensor, &variables);
 
+static bool firstPowerOn = true;
 volatile int cycles = 0;
 
 uint16_t gain;
@@ -102,7 +104,7 @@ void findSensor(void)
     variables.autoOffMax = 900; //90 on wireless?
 
     enableButtonInterrupt(BTN_ONOFF);
-
+    delay(500);
     Display.clearBuffer();
     variables.isConnected = sensor.getConnection();
     while (variables.isConnected == false)
@@ -206,6 +208,7 @@ void displayOn(void)
 
 void displaySleep(void)
 {
+
     // Hold both display and sensor in reset
     pinMode(MBAR_ONOFF, OUTPUT);
     pinMode(DISPLAY_RESET_PIN, OUTPUT);
@@ -223,6 +226,9 @@ void displaySleep(void)
     disableAllButtonInterrupt();
     enableButtonInterrupt(BTN_ONOFF);
     sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
+    // nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+    // NRF_POWER->GPREGRET = DFU_MAGIC_SKIP;
+    // NRF_POWER->SYSTEMOFF = 1;
     __WFE();
 }
 
@@ -264,7 +270,7 @@ void buttonONFFInterruptHandler(void)
     uint32_t interrupt_time = millis();
 
     // If interrupts come faster than debouce time, assume it's a bounce and ignore
-    if (interrupt_time - last_interrupt_time > DEBOUNCE_TIME)
+    if (interrupt_time - last_interrupt_time > 2 * DEBOUNCE_TIME)
     {
         //if(Button.isPressed(BTN_ONOFF))
         while (Button.isPressed(BTN_ONOFF))
@@ -273,7 +279,7 @@ void buttonONFFInterruptHandler(void)
         if (variables.sleepMode)
         {
             systemState = NO_SENSOR;
-            NVIC_SystemReset();
+            //NVIC_SystemReset();
         }
         else
         {
@@ -362,6 +368,12 @@ void setup()
 
     digitalWrite(DISPLAY_RESET_PIN, HIGH);
     digitalWrite(MBAR_ONOFF, HIGH);
+
+    if (firstPowerOn)
+    {
+        displaySleep(); // put device into sleep after power on
+        firstPowerOn = false;
+    }
 }
 
 void loop()
