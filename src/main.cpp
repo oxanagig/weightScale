@@ -208,7 +208,6 @@ void displayOn(void)
 
 void displaySleep(void)
 {
-
     // Hold both display and sensor in reset
     pinMode(MBAR_ONOFF, OUTPUT);
     pinMode(DISPLAY_RESET_PIN, OUTPUT);
@@ -216,6 +215,8 @@ void displaySleep(void)
     digitalWrite(MBAR_ONOFF, LOW);
     digitalWrite(DISPLAY_RESET_PIN, LOW);
 
+    //digitalWrite(MBAR_ONOFF, HIGH);
+    //    adc.standbyMode();
     // initialize gobal variables
     variables.isConnected = false;
     variables.autoOffCount = 0;
@@ -226,10 +227,11 @@ void displaySleep(void)
     disableAllButtonInterrupt();
     enableButtonInterrupt(BTN_ONOFF);
     sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
-    // nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+    nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
     // NRF_POWER->GPREGRET = DFU_MAGIC_SKIP;
     // NRF_POWER->SYSTEMOFF = 1;
-    __WFE();
+    // delay(100);
+    __WFI();
 }
 
 //  Checks how long the display has been on with the SAME value.
@@ -239,8 +241,8 @@ void autoOffCheck(int value)
     static int oldValue;
 
     // value = (value & 0xff00) | (int)((value & 0xff) / 4);
-    DEBUG_MSG(value);
-    DEBUG_MSG("\n");
+    // DEBUG_MSG(value);
+    // DEBUG_MSG("\n");
 
     if ((abs(oldValue - value) / 3) == 0)
     {
@@ -260,8 +262,8 @@ void autoOffCheck(int value)
 
     oldValue = value;
 
-    DEBUG_MSG(variables.autoOffCount);
-    DEBUG_MSG("\n");
+    // DEBUG_MSG(variables.autoOffCount);
+    // DEBUG_MSG("\n");
 }
 
 void buttonONFFInterruptHandler(void)
@@ -284,7 +286,7 @@ void buttonONFFInterruptHandler(void)
         else
         {
             systemState = SYSTEM_OFF;
-            displaySleep();
+            //displaySleep();
         }
     }
     last_interrupt_time = interrupt_time;
@@ -368,7 +370,7 @@ void setup()
 
     digitalWrite(DISPLAY_RESET_PIN, HIGH);
     digitalWrite(MBAR_ONOFF, HIGH);
-
+    nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
     if (firstPowerOn)
     {
         displaySleep(); // put device into sleep after power on
@@ -414,10 +416,10 @@ void loop()
         }
         Button.clearPressState();
 
-        DEBUG_MSG("read sensor value: ");
+        //DEBUG_MSG("read sensor value: ");
         adcReading = sensor.getReading();
-        DEBUG_MSG(adcReading);
-        DEBUG_MSG("\n");
+        //DEBUG_MSG(adcReading);
+        //DEBUG_MSG("\n");
 
         //if value is 0 or 65535, check the memory to make sure we're still connected
         if (adcReading == 0 || adcReading == 65535)
@@ -462,7 +464,7 @@ void loop()
         break;
 
     case SYSTEM_OFF:
-        /* the system should be turned off inside interrupt */
+        displaySleep();
     default:
         break;
     }

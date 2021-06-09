@@ -239,6 +239,7 @@ void display::displaySensorValue(int valueDisplayLine)
 {
     bool _isNegValue = false;
     bool _isValuePrinted;
+    static bool _outOfRange = false;
     uint8_t _valueDigit;
     uint8_t _valueModulus;
     uint8_t _valueMaxLength;
@@ -440,119 +441,170 @@ void display::displaySensorValue(int valueDisplayLine)
         _valueLength = _valueLength - 1; //TODO: since this is across the board, this should be a temp. constant in the set() function!
     }
 
-    //Do 5 iterations for each character
-    for (uint8_t i = 1; i <= _valueMaxLength; i++) //= max length of characters for value
+    if (valueDisplayLine == 0)
     {
-        //If the value is negative, print a negative sign, then disable negative value marker
-        if (_isNegValue == true)
+        _outOfRange = false;
+        Serial.println(_value);
+        switch (_valueUnits)
         {
-            if (valueDisplayLine == 1)
-                _u8g2->print("-");
-            else
-                printToBuffer('-');
-            _isNegValue = false;
-            _valueLength = _valueLength - 1;
-            continue;
+        case UNIT_MV:
+
+            break;
+        case UNIT_N:
+            if (_value > 10000)
+            {
+                _outOfRange = true;
+                _value = 10000;
+            }
+            break;
+        case UNIT_KN:
+            sprintf(unitStr, "kN");
+            if (_value > 1000)
+            {
+                _outOfRange = true;
+                _value = 1000;
+            }
+            break;
+        case UNIT_KGF:
+            if (_value > 1020)
+            {
+                _outOfRange = true;
+                _value = 1020;
+            }
+            break;
+        //case UNIT_PK :  sprintf(unitStr,"Pk");break;
+        default:
+            if (_value > 2248)
+            {
+                _outOfRange = true;
+                _value = 2248;
+            }
+            break;
         }
-
-        // Print a fake zero and skip IF zp is GREATER than current digit position
-        if (_valueZeroPadPos > (_valueMaxLength - i))
+    }
+    //else
+    {
+        //Do 5 iterations for each character
+        for (uint8_t i = 1; i <= _valueMaxLength; i++) //= max length of characters for value
         {
-            if (valueDisplayLine == 1)
-                _u8g2->print("0");
-            else
-                printToBuffer('0');
-            _valueLength = _valueLength - 1;
-            continue;
-        }
+            //If the value is negative, print a negative sign, then disable negative value marker
+            if (_isNegValue == true)
+            {
+                if (valueDisplayLine == 1)
+                    _u8g2->print("-");
+                else
+                    printToBuffer('-');
+                _isNegValue = false;
+                _valueLength = _valueLength - 1;
+                continue;
+            }
 
-        //Get the first digit; DIG is reversed (43210) <-- the 5 digits positions
-        _valueDigit = getDigit(_value, _valueLength - 1);
-
-        // If the value is empty so far...print a space, or a 0 if there is a decimal in the next position
-        if (_isValuePrinted == false && _valueDigit == 0)
-        {
-            if (_valueDec == (1 + i))
+            // Print a fake zero and skip IF zp is GREATER than current digit position
+            if (_valueZeroPadPos > (_valueMaxLength - i))
             {
                 if (valueDisplayLine == 1)
                     _u8g2->print("0");
                 else
                     printToBuffer('0');
-                _isValuePrinted = true;
+                _valueLength = _valueLength - 1;
+                continue;
             }
-            else
-            {
-                // if (valueDisplayLine == 0)
-                //     printToBuffer(' ');
-            }
-            _valueLength = _valueLength - 1;
-        }
-        else // Value is not zero, stop printing spaces
-        {
-            //If the decimal is in the current display position
-            //TODO: should we move this further up the loop???
-            if (_valueDec == i)
-            {
-                if (valueDisplayLine == 1)
-                    _u8g2->print(".");
-                else
-                    printToBuffer('.');
-            }
-            else
-            {
 
-                if (valueDisplayLine == 1)
+            //Get the first digit; DIG is reversed (43210) <-- the 5 digits positions
+            _valueDigit = getDigit(_value, _valueLength - 1);
+
+            // If the value is empty so far...print a space, or a 0 if there is a decimal in the next position
+            if (_isValuePrinted == false && _valueDigit == 0)
+            {
+                if (_valueDec == (1 + i))
                 {
-                    char buffer[2];
-                    sprintf(buffer, "%d", _valueDigit);
-                    _u8g2->print(buffer);
+                    if (valueDisplayLine == 1)
+                        _u8g2->print("0");
+                    else
+                        printToBuffer('0');
+                    _isValuePrinted = true;
                 }
                 else
                 {
-                    printToBuffer(_valueDigit + 0x30);
+                    // if (valueDisplayLine == 0)
+                    //     printToBuffer(' ');
                 }
                 _valueLength = _valueLength - 1;
             }
+            else // Value is not zero, stop printing spaces
+            {
+                //If the decimal is in the current display position
+                //TODO: should we move this further up the loop???
+                if (_valueDec == i)
+                {
+                    if (valueDisplayLine == 1)
+                        _u8g2->print(".");
+                    else
+                        printToBuffer('.');
+                }
+                else
+                {
 
-            _isValuePrinted = true;
+                    if (valueDisplayLine == 1)
+                    {
+                        char buffer[2];
+                        sprintf(buffer, "%d", _valueDigit);
+                        _u8g2->print(buffer);
+                    }
+                    else
+                    {
+                        printToBuffer(_valueDigit + 0x30);
+                    }
+                    _valueLength = _valueLength - 1;
+                }
+
+                _isValuePrinted = true;
+            }
         }
-    }
 
-    //Determine whether to show a space before the unit
-    if (_valueMaxLength < 6)
-    {
+        //Determine whether to show a space before the unit
+        if (_valueMaxLength < 6)
+        {
+            if (valueDisplayLine == 1)
+                _u8g2->print(" ");
+            // else
+            //     printToBuffer(' ');
+        }
+
+        if (_outOfRange == true)
+        {
+            _u8g2->clearBuffer();
+            _u8g2->setCursor(10, 40);
+            _u8g2->print("Out Of Range");
+            return;
+        }
         if (valueDisplayLine == 1)
-            _u8g2->print(" ");
-        // else
-        //     printToBuffer(' ');
-    }
-
-    if (valueDisplayLine == 1)
-    {
-        _u8g2->print(" Peak");
-        if (_valueUnits == UNIT_N)
         {
-            _u8g2->setCursor(LCDWidth - 15, 55);
-        }
-        else if (_valueUnits == UNIT_KN)
-        {
-            _u8g2->setCursor(LCDWidth - 25, 55);
-        }
-        else if (_valueUnits == UNIT_LBF)
-        {
-            _u8g2->setCursor(LCDWidth - 28, 55);
+            _u8g2->print("Peak");
+            if (_valueUnits == UNIT_N)
+            {
+                _u8g2->setCursor(LCDWidth - 15, 55);
+            }
+            else if (_valueUnits == UNIT_KN)
+            {
+                _u8g2->setCursor(LCDWidth - 25, 55);
+            }
+            else if (_valueUnits == UNIT_LBF)
+            {
+                _u8g2->setCursor(LCDWidth - 28, 55);
+            }
+            else
+            {
+                _u8g2->setCursor(LCDWidth - 35, 55);
+            }
+            _u8g2->print(unitStr);
         }
         else
         {
-            _u8g2->setCursor(LCDWidth - 35, 55);
+            printToBuffer('\0');
+            _u8g2->setCursor(ALIGN_RIGHT(_printBuffer), 35);
+            _u8g2->print(_printBuffer);
         }
-        _u8g2->print(unitStr);
-    }
-    else
-    {
-        printToBuffer('\0');
-        _u8g2->setCursor(ALIGN_RIGHT(_printBuffer), 35);
-        _u8g2->print(_printBuffer);
     }
 }
 
