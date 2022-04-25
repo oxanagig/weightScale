@@ -4,15 +4,15 @@
   Created by Xiang Gao, November 29, 2020.
 */
 
-#include "arduino.h"
+#include <arduino.h>
 
 #ifndef BUTTON_h
 #define BUTTON_h
 
-#define BTN_FUNC    11
-#define BTN_ONOFF   13
-#define BTN_ZERO    10
-#define BTN_MODE    12 
+#define BTN_FUNC    5
+#define BTN_ONOFF   6
+#define BTN_ZERO    7
+#define BTN_MODE    8 
 
 class button
 {

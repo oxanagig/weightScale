@@ -4,10 +4,9 @@
   Created by Xiang Gao, November 28, 2020.
 */
 #include "gVariables.h"
-#include <Adafruit_SPIFlash.h>
 
-Adafruit_FlashTransport_QSPI flashTransport;
-Adafruit_SPIFlash onboardFlash(&flashTransport);
+//Adafruit_FlashTransport_QSPI flashTransport;
+//Adafruit_SPIFlash onboardFlash(&flashTransport);
 
 gVariables::gVariables(void)
 {
@@ -19,7 +18,7 @@ gVariables::gVariables(void)
 void gVariables::begin(void)
 {
   // Serial.print("Starting up onboard QSPI Flash...");
-  onboardFlash.begin();
+  //onboardFlash.begin();
   // Serial.println("Done");
   // Serial.println("Onboard Flash information");
   // Serial.print("JEDEC ID: 0x");
@@ -28,7 +27,7 @@ void gVariables::begin(void)
   // Serial.print(onboardFlash.size() / 1024);
   // Serial.println(" KB");
 
-  _pagesize = onboardFlash.pageSize();
+  //_pagesize = onboardFlash.pageSize();
   _readFlash();
 
   if (_buffer[INITIALIZED_FLAG] != 0x55)
@@ -137,11 +136,11 @@ void gVariables::setDispalyUses(uint16_t use)
 
 void gVariables::_readFlash(void)
 {
-  onboardFlash.readBuffer(0, _buffer, _pagesize);
+  //onboardFlash.readBuffer(0, _buffer, _pagesize);
 }
 
 void gVariables::_writeFlash(void)
 {
-  onboardFlash.eraseSector(0);
-  onboardFlash.writeBuffer(0, _buffer, _pagesize);
+  //onboardFlash.eraseSector(0);
+  //onboardFlash.writeBuffer(0, _buffer, _pagesize);
 }

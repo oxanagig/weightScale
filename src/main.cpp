@@ -11,7 +11,7 @@
 #define DEBUG
 #define INTERRUPT_PIN PIN_BUTTON1
 #define LOOP_CYCLES 100
-#define CYCLE_TIME_MS 10
+#define CYCLE_TIME_MS 100
 #define DEBOUNCE_TIME 100
 #define DFU_MAGIC_SKIP 0x6d
 
@@ -21,8 +21,8 @@
 #define DEBUG_MSG(msg)
 #endif
 
-#define DISPLAY_RESET_PIN 7
-#define MBAR_ONOFF 5 // this a 5V output pin
+#define DISPLAY_RESET_PIN 2
+#define MBAR_ONOFF 3 // this a 5V output pin
 
 enum SYS_STATE
 {
@@ -226,12 +226,7 @@ void displaySleep(void)
     systemState = SYSTEM_OFF;
     disableAllButtonInterrupt();
     enableButtonInterrupt(BTN_ONOFF);
-    sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
-    nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-    // NRF_POWER->GPREGRET = DFU_MAGIC_SKIP;
-    // NRF_POWER->SYSTEMOFF = 1;
-    // delay(100);
-    __WFI();
+    //sleep();
 }
 
 //  Checks how long the display has been on with the SAME value.
@@ -359,23 +354,21 @@ void setup()
 {
 
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(PIN_BUTTON1, INPUT_PULLUP);
-    pinMode(DISPLAY_RESET_PIN, OUTPUT);
+    //pinMode(DISPLAY_RESET_PIN, OUTPUT);
     pinMode(MBAR_ONOFF, OUTPUT);
     digitalWrite(DISPLAY_RESET_PIN, LOW);
     digitalWrite(MBAR_ONOFF, LOW);
 
-    Serial.begin(115200);
+    Serial.begin(9600);
     sensor.begin();
-
+    
     digitalWrite(DISPLAY_RESET_PIN, HIGH);
     digitalWrite(MBAR_ONOFF, HIGH);
-    nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-    if (firstPowerOn)
-    {
-        displaySleep(); // put device into sleep after power on
-        firstPowerOn = false;
-    }
+    // if (firstPowerOn)
+    // {
+    //     displaySleep(); // put device into sleep after power on
+    //     firstPowerOn = false;
+    // }
 }
 
 void loop()
@@ -469,6 +462,6 @@ void loop()
         break;
     }
 
-    //cycles++;
+    cycles++;
     delay(CYCLE_TIME_MS);
 }

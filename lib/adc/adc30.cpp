@@ -21,7 +21,7 @@ void adc30::begin(void)
     SPI.begin();
     SPI.setDataMode(SPI_MODE3);
     SPI.setBitOrder(MSBFIRST);
-    SPI.setClockDivider(SPI_CLOCK_DIV512); // due to the long cable, the speed must be low
+    SPI.setClockDivider(SPI_CLOCK_DIV32); // due to the long cable, the speed must be low
 }
 
 void adc30::reset()
