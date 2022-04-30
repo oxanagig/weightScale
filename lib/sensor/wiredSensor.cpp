@@ -51,15 +51,17 @@ uint16_t wiredSensor::getAdcGain(void)
 */
 bool wiredSensor::setAdcGain(uint16_t adcGain)
 {
-    // Serial.println("setGain");
-    // Serial.println(adcGain);
+    Serial.println("setGain:");
+    Serial.println(adcGain);
     _adc->reset();
     _adc->gainWrite(adcGain);
+    Serial.println("system zero calibration");
     _adc->systemZeroCalib();
-    while (_adc->isReadyAndSteady())
+    while (!_adc->isReady())
         ;
+    Serial.println("Set to Single Convert Mode");
     _adc->singleConvertMode();
-    while (_adc->isReadyAndSteady())
+    while (!_adc->isReady())
         ;
     _valueA = _adc->getValue();
 

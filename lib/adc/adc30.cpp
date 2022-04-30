@@ -163,7 +163,7 @@ void adc30::modeWrite()
 /*
 * Check if the data is ready and steady to read
 */
-bool adc30::isReadyAndSteady(void)
+bool adc30::isReady(void)
 {
     uint8_t status;
     SPI.transfer(CR_SINGLE_READ | CR_STATUS_REGISTER);
@@ -171,12 +171,33 @@ bool adc30::isReadyAndSteady(void)
 
     Serial.println((char)(status & 0b11000000), BIN);
     // check /RDY bit and /STDY bit
-    if ((status & 0b11000000) == 0)
+    if ((status & 0b10000000) == 0)
     {
+        Serial.println("ready is low");
         return true;
     }
 
     // prevent execcisve read
-    delay(5);
+    delay(1000);
     return false;
+}
+
+bool adc30::isSteady(void)
+{
+    uint8_t status;
+    SPI.transfer(CR_SINGLE_READ | CR_STATUS_REGISTER);
+    status = SPI.transfer(READ_ONLY);
+
+    Serial.println((char)(status & 0b11000000), BIN);
+    // check /RDY bit and /STDY bit
+    if ((status & 0b01000000) == 0)
+    {
+        Serial.println("steady is low");
+        return true;
+    }
+
+    // prevent execcisve read
+    delay(1000);
+    return false;
+    
 }

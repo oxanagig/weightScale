@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <U8g2lib.h>
 #include <display.h>
 #include <adc30.h>
@@ -7,6 +8,7 @@
 #include <button.h>
 #include <menu.h>
 #include <gVariables.h>
+
 
 #define DEBUG
 #define INTERRUPT_PIN PIN_BUTTON1
@@ -366,16 +368,18 @@ void setup()
     digitalWrite(MBAR_ONOFF, LOW);
 
     Serial.begin(115200);
+    while ( !Serial ) delay(10);   // for nrf52840 with native usb
+    Serial.print("use USB serial");
     sensor.begin();
 
     digitalWrite(DISPLAY_RESET_PIN, HIGH);
     digitalWrite(MBAR_ONOFF, HIGH);
-    nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-    if (firstPowerOn)
-    {
-        displaySleep(); // put device into sleep after power on
-        firstPowerOn = false;
-    }
+    // nrf_gpio_cfg_sense_input(12, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+    // if (firstPowerOn)
+    // {
+    //     displaySleep(); // put device into sleep after power on
+    //     firstPowerOn = false;
+    // }
 }
 
 void loop()

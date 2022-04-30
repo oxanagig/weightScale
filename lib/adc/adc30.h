@@ -94,7 +94,8 @@ public:
   void gainWrite(uint16_t gain);
   void offsetWrite(uint16_t offset);
   uint16_t getValue();
-  bool isReadyAndSteady(void);
+  bool isReady(void);
+  bool isSteady(void);
 
 private:
   void modeWrite();
