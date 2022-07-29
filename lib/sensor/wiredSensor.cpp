@@ -32,6 +32,7 @@ uint16_t wiredSensor::getReading(void)
 bool wiredSensor::getConnection(void)
 {
     uint16_t memValue = getSerial();
+    // Serial.println(memValue);
     if (memValue == 0 || memValue == 65535)
         return false;
 

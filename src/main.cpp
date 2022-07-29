@@ -7,22 +7,22 @@
 #include <button.h>
 #include <menu.h>
 #include <gVariables.h>
+#include <avr/sleep.h>
 
 #define DEBUG
 #define INTERRUPT_PIN PIN_BUTTON1
-#define LOOP_CYCLES 100
 #define CYCLE_TIME_MS 100
 #define DEBOUNCE_TIME 100
-#define DFU_MAGIC_SKIP 0x6d
 
 #ifdef DEBUG
-#define DEBUG_MSG(msg) (Serial.print(msg))
+#define DEBUG_MSG(msg) (Serial1.println(msg))
 #else
 #define DEBUG_MSG(msg)
 #endif
 
-#define DISPLAY_RESET_PIN 2
-#define MBAR_ONOFF 3 // this a 5V output pin
+#define DISPLAY_SWITCH_PIN 3
+#define MBAR_ONOFF 9 
+#define SHIFT_EN 14
 
 enum SYS_STATE
 {
@@ -38,7 +38,7 @@ enum SYS_STATE systemState = NO_SENSOR;
 gVariables variables;
 adc30 adc;
 button Button;
-U8G2_SSD1309_128X64_NONAME2_F_HW_I2C u8g2(U8G2_R2, DISPLAY_RESET_PIN, PIN_WIRE_SCL, PIN_WIRE_SDA);
+U8G2_SSD1309_128X64_NONAME2_F_HW_I2C u8g2(U8G2_R2, U8X8_PIN_NONE, PIN_WIRE_SCL, PIN_WIRE_SDA);
 display Display(&u8g2, &variables);
 wiredSensor sensor(&adc, &variables);
 menu Menu(&Display, &Button, &sensor, &variables);
@@ -52,7 +52,7 @@ void buttonONFFInterruptHandler(void);
 void buttonFuncInterruptHandler(void);
 void buttonZeroInterruptHandler(void);
 void buttonModeInterruptHandler(void);
-//void buttonInterruptHandler(void);
+void buttonInterruptHandler(void);
 void startSensor(void);
 void autoOffCheck(int value);
 
@@ -104,11 +104,15 @@ void findSensor(void)
     variables.autoOffMax = 900; //90 on wireless?
 
     enableButtonInterrupt(BTN_ONOFF);
-    delay(500);
+    // delay(500);
     Display.clearBuffer();
     variables.isConnected = sensor.getConnection();
     while (variables.isConnected == false)
     {
+        
+        // DEBUG_MSG("FIND SENSOR\n");
+        if(variables.sleepMode)
+            break;
         if (attachSensorDisplayed == false)
         {
             Display.setFont(u8g2_font_t0_22b_mf);
@@ -139,6 +143,9 @@ void findSensor(void)
             autoOffCheck(0);
         }
     }
+
+    if(variables.sleepMode)
+        return;
     attachSensorDisplayed = false;
     enableAllButtonInterrupt();
     adc.begin();
@@ -182,7 +189,7 @@ void startSensor(void)
 
     Display.update();
     sensor.initUnits();
-    delay(1000);
+    
 }
 
 void displayOn(void)
@@ -190,7 +197,8 @@ void displayOn(void)
     variables.sleepMode = false;
     // release display and sensor reset pin
     digitalWrite(MBAR_ONOFF, HIGH);
-    digitalWrite(DISPLAY_RESET_PIN, HIGH);
+    digitalWrite(DISPLAY_SWITCH_PIN, HIGH);
+    digitalWrite(SHIFT_EN,HIGH);
     // delay(350); //increased pause value to fix "while plugged in" connection issue (still says 'attach sensor') (1507)
     Display.begin();
     u8g2.setBusClock(100000L);
@@ -200,8 +208,8 @@ void displayOn(void)
     DEBUG_MSG("display use:");
     DEBUG_MSG(variables.getDisplayUses());
     DEBUG_MSG('\n');
-    enableButtonInterrupt(BTN_ONOFF);
-    //delay(50);
+    enableAllButtonInterrupt();
+    delay(50);
 
     findSensor();
 }
@@ -209,24 +217,28 @@ void displayOn(void)
 void displaySleep(void)
 {
     // Hold both display and sensor in reset
-    pinMode(MBAR_ONOFF, OUTPUT);
-    pinMode(DISPLAY_RESET_PIN, OUTPUT);
+    // pinMode(MBAR_ONOFF, OUTPUT);
+    // pinMode(DISPLAY_SWITCH_PIN, OUTPUT);
+    // pinMode(SHIFT_EN,OUTPUT);
 
     digitalWrite(MBAR_ONOFF, LOW);
-    digitalWrite(DISPLAY_RESET_PIN, LOW);
+    digitalWrite(DISPLAY_SWITCH_PIN, LOW);
+    digitalWrite(SHIFT_EN,LOW);
+    pinMode(11, INPUT);
+    pinMode(12, INPUT);
+    pinMode(13, INPUT);
 
-    //digitalWrite(MBAR_ONOFF, HIGH);
-    //    adc.standbyMode();
-    // initialize gobal variables
     variables.isConnected = false;
     variables.autoOffCount = 0;
     Menu.setMenuExit(false);
-    // clear interrupt on change??
     variables.sleepMode = true;
     systemState = SYSTEM_OFF;
     disableAllButtonInterrupt();
     enableButtonInterrupt(BTN_ONOFF);
-    //sleep();
+    set_sleep_mode(SLEEP_MODE_STANDBY);
+    sleep_enable();
+    sleep_cpu();
+    sleep_disable();
 }
 
 //  Checks how long the display has been on with the SAME value.
@@ -273,16 +285,10 @@ void buttonONFFInterruptHandler(void)
         while (Button.isPressed(BTN_ONOFF))
             ;
         DEBUG_MSG("BTN_ONOFF\n");
-        if (variables.sleepMode)
-        {
-            systemState = NO_SENSOR;
-            //NVIC_SystemReset();
-        }
-        else
-        {
-            systemState = SYSTEM_OFF;
-            //displaySleep();
-        }
+        Button.setPressed(BTN_ONOFF);
+        variables.sleepMode ^=1;
+        DEBUG_MSG(variables.sleepMode);
+        
     }
     last_interrupt_time = interrupt_time;
 }
@@ -346,120 +352,199 @@ void buttonModeInterruptHandler(void)
     enableAllButtonInterrupt();
 }
 
+
+
+void systemInit(void)
+{
+
+     while (RTC.STATUS > 0) { /* Wait for all register to be synchronized */
+	}
+
+	RTC.CTRLA = RTC_PRESCALER_DIV1_gc   /* 1 */
+	            | 0 << RTC_RTCEN_bp     /* Enable: enabled */
+	            | 0 << RTC_RUNSTDBY_bp; /* Run In Standby: enabled */
+
+	RTC.CLKSEL = RTC_CLKSEL_INT1K_gc; /* 32KHz divided by 32 */
+
+
+	RTC.INTCTRL = 0 << RTC_CMP_bp    /* Compare Match Interrupt enable: enabled */
+	              | 0 << RTC_OVF_bp; /* Overflow Interrupt enable: disabled */
+
+
+    for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTA + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+
+	for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTB + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+
+	for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTC + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+  
+    for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTD + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+
+	for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTE + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+
+	for (uint8_t i = 0; i < 8; i++) {
+		*((uint8_t *)&PORTF + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;
+	}
+    /* DIR Registers Initialization */
+    PORTA_DIR = 0xF1;
+    PORTB_DIR = 0x3B;
+    PORTC_DIR = 0xFF;
+    PORTD_DIR = 0xFF;
+    PORTE_DIR = 0x07;
+    PORTF_DIR = 0x6F;
+
+
+    BOD.INTCTRL = 0 << BOD_VLMIE_bp      /* voltage level monitor interrrupt enable: disabled */
+                | BOD_VLMCFG_ABOVE_gc; /* Interrupt when supply goes above VLM level */
+
+    WDT.CTRLA = 0x00;
+
+    //VLMCFG BELOW; VLMIE disabled; 
+	BOD.INTCTRL = 0x00;
+
+    //VLMLVL 5ABOVE; 
+	BOD.VLMCTRLA = 0x00;
+}
+
 /*
   START HERE
 */
-
 void setup()
 {
-
-    pinMode(LED_BUILTIN, OUTPUT);
-    //pinMode(DISPLAY_RESET_PIN, OUTPUT);
-    pinMode(MBAR_ONOFF, OUTPUT);
-    digitalWrite(DISPLAY_RESET_PIN, LOW);
+    systemInit();
+    digitalWrite(DISPLAY_SWITCH_PIN, LOW);
     digitalWrite(MBAR_ONOFF, LOW);
+    digitalWrite(SHIFT_EN, LOW);
 
-    Serial.begin(9600);
+    pinMode(DISPLAY_SWITCH_PIN, OUTPUT);
+    pinMode(MBAR_ONOFF, OUTPUT);
+    pinMode(SHIFT_EN, OUTPUT);
+  
+    Serial1.begin(9600);
     sensor.begin();
-    
-    digitalWrite(DISPLAY_RESET_PIN, HIGH);
-    digitalWrite(MBAR_ONOFF, HIGH);
-    // if (firstPowerOn)
-    // {
-    //     displaySleep(); // put device into sleep after power on
-    //     firstPowerOn = false;
-    // }
+    // delay(1000);
+    DEBUG_MSG("RESET register:");
+    DEBUG_MSG(RSTCTRL_RSTFR);
+    if(!(RSTCTRL_RSTFR & RSTCTRL_SWRF_bm))
+    {
+        systemState = SYSTEM_OFF;
+        variables.sleepMode = 1;
+        RSTCTRL_RSTFR = 0;
+    }
 }
 
 void loop()
 {
     uint16_t adcReading;
+    DEBUG_MSG("power mode:");
+    DEBUG_MSG(systemState);
 
+    if(variables.sleepMode)
+        systemState = SYSTEM_OFF;
+    
     switch (systemState)
     {
-    case NO_SENSOR:
-        // this a blocking code
-        // it will loop inside the function until find the sensor
-        // or it reaches the auto off time limit
-        variables.begin();
-        displayOn();
-        systemState = DISPLAY_MEASUREMENT;
-        break;
+        case NO_SENSOR:
+            // this a blocking code
+            // it will loop inside the function until find the sensor
+            // or it reaches the auto off time limit
+            variables.begin();
+            displayOn();
+            
+            if(variables.sleepMode)
+                systemState = SYSTEM_OFF;
+            else
+                systemState =DISPLAY_MEASUREMENT;
+            Button.clearPressState();
+            break;
 
-    case DISPLAY_MEASUREMENT:
+        case DISPLAY_MEASUREMENT:
 
-        if (Button.hasPressed(BTN_ZERO) && Button.hasPressed(BTN_MODE))
-        {
-            systemState = DISPLAY_SECRET;
-        }
-        else if (Button.hasPressed(BTN_ZERO))
-        {
-            sensor.setSystemZero();
-            DEBUG_MSG("SystemZero\n");
-            variables.autoOffCount = 0;
-            sensor.zeroFast();
-        }
-        else if (Button.hasPressed(BTN_MODE))
-        {
-            systemState = DISPLAY_STATUS;
-        }
-        else if (Button.hasPressed(BTN_FUNC))
-        {
-            systemState = DISPLAY_MENU;
-        }
-        Button.clearPressState();
-
-        //DEBUG_MSG("read sensor value: ");
-        adcReading = sensor.getReading();
-        //DEBUG_MSG(adcReading);
-        //DEBUG_MSG("\n");
-
-        //if value is 0 or 65535, check the memory to make sure we're still connected
-        if (adcReading == 0 || adcReading == 65535)
-        {
-            if (!sensor.getConnection())
+            if (Button.hasPressed(BTN_ZERO) && Button.hasPressed(BTN_MODE))
             {
-                // sensor not found
-                findSensor();
-                break;
+                systemState = DISPLAY_SECRET;
             }
-        }
-        if (variables.getIsAutoOff())
-        {
-            autoOffCheck(adcReading);
-        }
+            else if (Button.hasPressed(BTN_ZERO))
+            {
+                sensor.setSystemZero();
+                DEBUG_MSG("SystemZero\n");
+                variables.autoOffCount = 0;
+                sensor.zeroFast();
+            }
+            else if (Button.hasPressed(BTN_MODE))
+            {
+                systemState = DISPLAY_STATUS;
+            }
+            else if (Button.hasPressed(BTN_FUNC))
+            {
+                systemState = DISPLAY_MENU;
+            }
+            Button.clearPressState();
 
-        Display.clearBuffer();
-        Display.setSensorValue(adcReading);
-        Display.setValueFormat(FAMILY_STANDARD_FORCE);
-        Display.displaySensorValue(0);
-        Display.setDisplayStatus(variables.getDisplayStatus());
-        Display.displaySensorValue(1);
-        Display.update();
-        break;
+            //DEBUG_MSG("read sensor value: ");
+            adcReading = sensor.getReading();
+            //DEBUG_MSG(adcReading);
+            //DEBUG_MSG("\n");
 
-    case DISPLAY_STATUS:
-        Menu.processModeMenu();
-        Button.clearPressState();
-        systemState = DISPLAY_MEASUREMENT;
-        break;
+            //if value is 0 or 65535, check the memory to make sure we're still connected
+            if (adcReading == 0 || adcReading == 65535)
+            {
+                if (!sensor.getConnection())
+                {
+                    // sensor not found
+                    findSensor();
+                    break;
+                }
+            }
+            if (variables.getIsAutoOff())
+            {
+                autoOffCheck(adcReading);
+            }
 
-    case DISPLAY_MENU:
-        Menu.processFunctionMenu();
-        Button.clearPressState();
-        systemState = DISPLAY_MEASUREMENT;
-        break;
+            Display.clearBuffer();
+            Display.setSensorValue(adcReading);
+            Display.setValueFormat(FAMILY_STANDARD_FORCE);
+            Display.displaySensorValue(0);
+            Display.setDisplayStatus(variables.getDisplayStatus());
+            Display.displaySensorValue(1);
+            Display.update();
+            break;
 
-    case DISPLAY_SECRET:
-        Menu.processSecretMenu();
-        Button.clearPressState();
-        systemState = DISPLAY_MEASUREMENT;
-        break;
+        case DISPLAY_STATUS:
+            Menu.processModeMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
 
-    case SYSTEM_OFF:
-        displaySleep();
-    default:
-        break;
+        case DISPLAY_MENU:
+            Menu.processFunctionMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
+
+        case DISPLAY_SECRET:
+            Menu.processSecretMenu();
+            Button.clearPressState();
+            systemState = DISPLAY_MEASUREMENT;
+            break;
+
+        case SYSTEM_OFF:
+            DEBUG_MSG("going to sleep\n");
+            // delay(1000);
+            displaySleep();
+             _PROTECTED_WRITE(RSTCTRL.SWRR,RSTCTRL_SWRE_bm);
+            systemState = NO_SENSOR;
+        default:
+            break;
     }
 
     cycles++;

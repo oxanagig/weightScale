@@ -35,6 +35,9 @@ void menu::optionSelect(void)
 
     while(1)
     {
+        
+        if(_var->sleepMode)
+            return;
         displayCurrentFunction();
 
         // Allow turning the power off
@@ -269,7 +272,7 @@ void menu::processModeMenu(void)
     // }
     while(!_button->isPressed(BTN_MODE))
     {
-        if(counter>153)
+        if(counter>153 | _var->sleepMode)
         {
             break;
         }

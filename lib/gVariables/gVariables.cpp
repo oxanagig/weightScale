@@ -5,8 +5,6 @@
 */
 #include "gVariables.h"
 
-//Adafruit_FlashTransport_QSPI flashTransport;
-//Adafruit_SPIFlash onboardFlash(&flashTransport);
 
 gVariables::gVariables(void)
 {
@@ -17,37 +15,25 @@ gVariables::gVariables(void)
 */
 void gVariables::begin(void)
 {
-  // Serial.print("Starting up onboard QSPI Flash...");
-  //onboardFlash.begin();
-  // Serial.println("Done");
-  // Serial.println("Onboard Flash information");
-  // Serial.print("JEDEC ID: 0x");
-  // Serial.println(onboardFlash.getJEDECID(), HEX);
-  // Serial.print("Flash size: ");
-  // Serial.print(onboardFlash.size() / 1024);
-  // Serial.println(" KB");
-
-  //_pagesize = onboardFlash.pageSize();
-  _readFlash();
-
-  if (_buffer[INITIALIZED_FLAG] != 0x55)
+  if ( EEPROM.read(INITIALIZED_FLAG) != 0x55)
   {
-    // Serial.println("initializing flash");
-    memset(_buffer, 0, _pagesize);
+    for (int i = 0 ; i < EEPROM.length() ; i++) 
+    {
+      EEPROM.write(i, 0);
+    }
 
-    _buffer[INITIALIZED_FLAG] = 0x55;
-    _buffer[DISPLAY_STATUS_STORE] = DISPLAY_FORCE;
-    _buffer[UNITS_STATUS_STORE] = UNIT_N;
-    _buffer[AUTO_OFF_STORE] = 1;
-    _buffer[LANGUAGE_STORE] = LANG_EN;
-    _buffer[NUM_USES_STORE] = 0;
-    _buffer[NUM_USES_STORE + 1] = 0;
+    EEPROM.write(INITIALIZED_FLAG, 0x55);
+    EEPROM.write(DISPLAY_STATUS_STORE, DISPLAY_FORCE);
+    EEPROM.write(AUTO_OFF_STORE, 1);
+    EEPROM.write(UNITS_STATUS_STORE,UNIT_N);
+    EEPROM.write(LANGUAGE_STORE, LANG_EN);
+    EEPROM.write(NUM_USES_STORE,0);
+    EEPROM.write(NUM_USES_STORE+1,0);
 
-    _writeFlash();
   }
   else
   {
-    // Serial.println("flash initialized");
+    // Do nothing because it is intialized
   }
 
   // Serial.print("selected Unit:");
@@ -61,11 +47,11 @@ void gVariables::begin(void)
 
   // Serial.print("number of use:");
   // Serial.println((uint16_t)_buffer[NUM_USES_STORE]+((uint16_t)_buffer[NUM_USES_STORE+1]<<8));
-  _displayStatus = (enum DISPLAY_STATUS)_buffer[DISPLAY_STATUS_STORE];
-  _units = _buffer[UNITS_STATUS_STORE];
-  _isAutoOff = _buffer[AUTO_OFF_STORE];
-  _lang = _buffer[LANGUAGE_STORE];
-  _displayUses = (uint16_t)_buffer[NUM_USES_STORE] + ((uint16_t)_buffer[NUM_USES_STORE + 1] << 8);
+  _displayStatus = (enum DISPLAY_STATUS)EEPROM.read(DISPLAY_STATUS_STORE);
+  _units = EEPROM.read(UNITS_STATUS_STORE);
+  _isAutoOff = EEPROM.read(AUTO_OFF_STORE);
+  _lang = EEPROM.read(LANGUAGE_STORE);
+  _displayUses = (uint16_t)EEPROM.read(NUM_USES_STORE) + ((uint16_t)EEPROM.read(NUM_USES_STORE + 1) << 8);
 }
 
 enum DISPLAY_STATUS gVariables::getDisplayStatus(void)
@@ -76,9 +62,8 @@ enum DISPLAY_STATUS gVariables::getDisplayStatus(void)
 void gVariables::setDisplayStatus(enum DISPLAY_STATUS displayStatus)
 {
   _displayStatus = displayStatus;
-  _buffer[DISPLAY_STATUS_STORE] = _displayStatus;
-  _writeFlash();
-  _readFlash(); // read back the flash to updat the cache buffer
+  EEPROM.write(DISPLAY_STATUS_STORE, _displayStatus);
+
 }
 
 uint8_t gVariables::getUnits(void)
@@ -89,9 +74,7 @@ uint8_t gVariables::getUnits(void)
 void gVariables::setUnits(uint8_t units)
 {
   _units = units;
-  _buffer[UNITS_STATUS_STORE] = _units;
-  _writeFlash();
-  _readFlash(); // read back the flash to updat the cache buffer
+  EEPROM.write(UNITS_STATUS_STORE,_units);
 }
 
 bool gVariables::getIsAutoOff(void)
@@ -102,9 +85,8 @@ bool gVariables::getIsAutoOff(void)
 void gVariables::setIsAutoOff(bool isAutoOff)
 {
   _isAutoOff = isAutoOff;
-  _buffer[AUTO_OFF_STORE] = _isAutoOff;
-  _writeFlash();
-  _readFlash(); // read back the flash to updat the cache buffer
+  EEPROM.write(AUTO_OFF_STORE,_isAutoOff);
+  
 }
 
 uint8_t gVariables::getLang(void)
@@ -115,9 +97,8 @@ uint8_t gVariables::getLang(void)
 void gVariables::setLang(uint8_t lang)
 {
   _lang = lang;
-  _buffer[LANGUAGE_STORE] = _lang;
-  _writeFlash();
-  _readFlash(); // read back the flash to updat the cache buffer
+  EEPROM.write(LANGUAGE_STORE,_lang);
+ 
 }
 
 uint16_t gVariables::getDisplayUses(void)
@@ -128,19 +109,16 @@ uint16_t gVariables::getDisplayUses(void)
 void gVariables::setDispalyUses(uint16_t use)
 {
   _displayUses = use;
-  _buffer[NUM_USES_STORE] = (uint8_t)(_displayUses & 0xFF);
-  _buffer[NUM_USES_STORE + 1] = (uint8_t)(_displayUses >> 8);
-  _writeFlash();
-  _readFlash(); // read back the flash to updat the cache buffer
+  EEPROM.write(NUM_USES_STORE,(uint8_t)(_displayUses & 0xFF));
+  EEPROM.write(NUM_USES_STORE + 1,(uint8_t)(_displayUses >> 8));
 }
 
 void gVariables::_readFlash(void)
 {
-  //onboardFlash.readBuffer(0, _buffer, _pagesize);
+
 }
 
 void gVariables::_writeFlash(void)
 {
-  //onboardFlash.eraseSector(0);
-  //onboardFlash.writeBuffer(0, _buffer, _pagesize);
+ 
 }

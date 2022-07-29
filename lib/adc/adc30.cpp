@@ -169,7 +169,7 @@ bool adc30::isReadyAndSteady(void)
     SPI.transfer(CR_SINGLE_READ | CR_STATUS_REGISTER);
     status = SPI.transfer(READ_ONLY);
 
-    Serial.println((char)(status & 0b11000000), BIN);
+    //Serial.println((char)(status & 0b11000000), BIN);
     // check /RDY bit and /STDY bit
     if ((status & 0b11000000) == 0)
     {

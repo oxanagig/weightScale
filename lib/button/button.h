@@ -9,10 +9,10 @@
 #ifndef BUTTON_h
 #define BUTTON_h
 
-#define BTN_FUNC    5
-#define BTN_ONOFF   6
+#define BTN_FUNC    8
+#define BTN_ONOFF   5
 #define BTN_ZERO    7
-#define BTN_MODE    8 
+#define BTN_MODE    6 
 
 class button
 {

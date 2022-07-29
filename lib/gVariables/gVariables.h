@@ -7,6 +7,7 @@
 #define NVM_h
 
 #include "Arduino.h"
+#include <EEPROM.h>
 
 #define DISPLAY_VERSION_YEAR  21
 #define DISPLAY_VERSION_MONTH  1
@@ -144,8 +145,6 @@ class gVariables
         uint8_t _lang;
         uint8_t _displayUses;
         uint8_t _units;
-        uint8_t _buffer[512];
-        uint16_t _pagesize;
         void _readFlash(void);
         void _writeFlash(void);
 };

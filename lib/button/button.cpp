@@ -49,7 +49,6 @@ bool button::hasPressed(int button)
     {
         case BTN_FUNC: 
             pressed = _hasPressed[0];
-            _hasPressed[0] = false;
             break;
         case BTN_ONOFF:
             pressed = _hasPressed[1];
