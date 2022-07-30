@@ -40,35 +40,28 @@ void menu::optionSelect(void)
             return;
         displayCurrentFunction();
 
-        // Allow turning the power off
-        if (_button->isPressed(BTN_ONOFF))
-        {
-            while(_button->isPressed(BTN_ONOFF)); // waits for release  
-            //TODO:
-            //goto displaySleep    ;  
-            //break;      
-        }
-
         //Allow exiting the menu entirely (return to main)
-        if (_button->isPressed(BTN_ZERO))
+        if (_button->hasPressed(BTN_ZERO))
         {
             while(_button->isPressed(BTN_ZERO)); // waits for release
             _menuExit = true;
+            _button->clearPressState();
             break; // save this selection, will skip to end
         }
         
         // Go to next option selection
-        if (_button->isPressed(BTN_FUNC))
+        if (_button->hasPressed(BTN_FUNC))
         {
             while(_button->isPressed(BTN_FUNC)); // waits for release
+            _button->clearPressState();
             break;//save this selection, go to next option
         }
 
-        if (_button->isPressed(BTN_MODE))
+        if (_button->hasPressed(BTN_MODE))
         {
             while(_button->isPressed(BTN_MODE)); // waits for release
             _optionSelected = _optionSelected + 1 ;
-            
+            _button->clearPressState();
             if(_currentOption!=1)
             {
                 if ((_optionSelected == 2) && (_option[2] == NULL)) 
@@ -222,8 +215,6 @@ void menu::processFunctionMenu(void)
     optionSelect();
     _var->setIsAutoOff(_optionSelected);
 
-    // TODO re-enable interrupt on change for the buttons
-
     _menuExit = false;
 }
 
@@ -287,7 +278,6 @@ void menu::processSecretMenu(void)
 {
     
     char adcGain[9];
-    //TODO: turn off interrupt for buttons except onff button
     
     _currentOption = 3;
     _optionSelected = _var->isRawMode;
@@ -313,8 +303,6 @@ void menu::processSecretMenu(void)
     _display->msg("FScale: ",adcGain,1500,10,true);
     
     delay(100);
-
-    //TODO: turn on the button interupt
 
     _menuExit = false;
     _var->systemZero = true;
@@ -347,7 +335,6 @@ bool menu::menuButtonProcess(void)
 void menu::exitMenu(void)
 {
     delay(570);
-    // TODO: Turn on all the interrupt for the buttons
 }
 
 void menu::setMenuExit(bool enabled)
